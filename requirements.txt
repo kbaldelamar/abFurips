@@ -1,0 +1,19 @@
+# Dependencias principales
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
+
+# Base de datos
+SQLAlchemy>=2.0.0
+PyMySQL>=1.1.0
+pymysql[rsa]
+
+# UI Desktop
+PySide6>=6.5.0
+
+# PDF
+PyMuPDF>=1.23.0
+reportlab>=4.0.0
+
+# Utilidades
+python-dateutil>=2.8.0
