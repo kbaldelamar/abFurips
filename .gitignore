@@ -1,0 +1,39 @@
+# Archivos y carpetas generados
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Entorno virtual
+venv/
+env/
+ENV/
+
+# Variables de entorno
+.env
+
+# Logs
+logs/
+*.log
+
+# Salidas PDF
+output/
+*.pdf
+
+# Base de datos local
+*.db
+*.sqlite
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Temporales
+tmp/
+temp/
