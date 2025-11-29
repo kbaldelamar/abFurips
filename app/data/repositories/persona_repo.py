@@ -43,6 +43,19 @@ class PersonaRepository:
             .first()
         )
     
+    def get_all_activas(self, limit: int = 1000) -> List[Persona]:
+        """Obtiene todas las personas activas."""
+        return (
+            self.session.query(Persona)
+            .options(
+                joinedload(Persona.tipo_identificacion),
+                joinedload(Persona.sexo),
+            )
+            .order_by(Persona.primer_nombre, Persona.primer_apellido)
+            .limit(limit)
+            .all()
+        )
+    
     def search(self, texto: str, limit: int = 50) -> List[Persona]:
         """Busca personas por nombre, apellido o documento."""
         filtro = f"%{texto}%"

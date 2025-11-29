@@ -184,13 +184,14 @@ class BuscarAccidenteDialog(QDialog):
     def _create_tabla(self) -> QTableWidget:
         """Crea la tabla de resultados."""
         table = QTableWidget()
-        table.setColumnCount(10)
+        table.setColumnCount(11)
         table.setHorizontalHeaderLabels([
             "ID",
             "Consecutivo",
             "Factura",
             "Fecha",
             "Hora",
+            "Placa",
             "Tipo Doc",
             "Nro. Doc",
             "Primer Nombre",
@@ -211,11 +212,12 @@ class BuscarAccidenteDialog(QDialog):
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # Factura
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)  # Fecha
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)  # Hora
-        header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)  # Tipo Doc
-        header.setSectionResizeMode(6, QHeaderView.ResizeMode.ResizeToContents)  # Nro Doc
-        header.setSectionResizeMode(7, QHeaderView.ResizeMode.Stretch)  # Nombre
-        header.setSectionResizeMode(8, QHeaderView.ResizeMode.Stretch)  # Apellido
-        header.setSectionResizeMode(9, QHeaderView.ResizeMode.Stretch)  # 2do Apellido
+        header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)  # Placa
+        header.setSectionResizeMode(6, QHeaderView.ResizeMode.ResizeToContents)  # Tipo Doc
+        header.setSectionResizeMode(7, QHeaderView.ResizeMode.ResizeToContents)  # Nro Doc
+        header.setSectionResizeMode(8, QHeaderView.ResizeMode.Stretch)  # Nombre
+        header.setSectionResizeMode(9, QHeaderView.ResizeMode.Stretch)  # Apellido
+        header.setSectionResizeMode(10, QHeaderView.ResizeMode.Stretch)  # 2do Apellido
         
         # Doble clic para seleccionar
         table.doubleClicked.connect(self._on_seleccionar)
@@ -320,16 +322,19 @@ class BuscarAccidenteDialog(QDialog):
             # Hora
             self.table_resultados.setItem(row, 4, QTableWidgetItem(acc.get("hora_evento", "")))
             
+            # Placa
+            self.table_resultados.setItem(row, 5, QTableWidgetItem(acc.get("placa", "") or ""))
+            
             # Tipo Doc
-            self.table_resultados.setItem(row, 5, QTableWidgetItem(acc.get("tipo_identificacion", "")))
+            self.table_resultados.setItem(row, 6, QTableWidgetItem(acc.get("tipo_identificacion", "")))
             
             # Nro Doc
-            self.table_resultados.setItem(row, 6, QTableWidgetItem(acc.get("numero_identificacion", "")))
+            self.table_resultados.setItem(row, 7, QTableWidgetItem(acc.get("numero_identificacion", "")))
             
             # Nombres
-            self.table_resultados.setItem(row, 7, QTableWidgetItem(acc.get("primer_nombre", "")))
-            self.table_resultados.setItem(row, 8, QTableWidgetItem(acc.get("primer_apellido", "")))
-            self.table_resultados.setItem(row, 9, QTableWidgetItem(acc.get("segundo_apellido", "") or ""))
+            self.table_resultados.setItem(row, 8, QTableWidgetItem(acc.get("primer_nombre", "")))
+            self.table_resultados.setItem(row, 9, QTableWidgetItem(acc.get("primer_apellido", "")))
+            self.table_resultados.setItem(row, 10, QTableWidgetItem(acc.get("segundo_apellido", "") or ""))
         
         # Habilitar botón de selección si hay resultados
         self.btn_seleccionar.setEnabled(self.table_resultados.rowCount() > 0)

@@ -48,22 +48,6 @@ CREATE TABLE `accidente` (
   CONSTRAINT `fk_accidente_vehiculo` FOREIGN KEY (`vehiculo_id`) REFERENCES `vehiculo` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
-/*Data for the table `accidente` */
-
-insert  into `accidente`(`id`,`prestador_id`,`numero_consecutivo`,`numero_factura`,`numero_rad_siras`,`naturaleza_evento_id`,`descripcion_otro_evento`,`fecha_evento`,`hora_evento`,`municipio_evento_id`,`direccion_evento`,`zona`,`vehiculo_id`,`estado_aseguramiento_id`,`descripcion`,`estado`) values 
-(1,1,'000000000001','FE123','SIRAS-001234',1,NULL,'2023-08-15','14:30:00',1,'Av. Caracas con Cl 45 sadasdasdasd','U',3,1,NULL,1),
-(2,1,'000000000002','prueba','1213123',1,NULL,'2025-11-17','13:49:56',5,'dasdasdasd',NULL,NULL,1,NULL,1),
-(3,1,'000000000003','df2343','fdsfdfd',1,NULL,'2025-11-17','15:25:47',1,'sdfsdfsfsdfsdfsfsf','U',NULL,1,NULL,1),
-(4,1,'000000000004','1111','111',1,NULL,'2025-11-17','15:30:50',5,'weewe','U',NULL,1,NULL,1),
-(5,1,'000000000005','1111','1111',1,NULL,'2025-11-17','15:51:01',5,'111111111111111111','R',NULL,1,NULL,1),
-(6,1,'000000000006','2131','12312',1,NULL,'2025-11-17','15:53:58',5,'123123123','R',NULL,1,NULL,1),
-(7,1,'000000000007','wqe','23',1,NULL,'2025-11-17','15:58:50',2,'qweqwerqwr','R',NULL,2,NULL,1),
-(8,1,'000000000008','123123','12312',1,NULL,'2025-11-17','16:01:34',2,'123123123','R',NULL,1,NULL,1),
-(9,1,'000000000009','12312','123123',1,NULL,'2025-11-17','16:06:46',5,'fdafasfsadf','U',NULL,1,NULL,1),
-(10,1,'000000000010','1111','111111111',1,NULL,'2025-11-17','17:07:03',2,'11111111111111111111111','R',1,7,NULL,1),
-(11,1,'000000000011','fc123','123233',1,NULL,'2025-11-17','19:44:15',1,'carera ok ok ok','U',1,1,NULL,1),
-(12,1,'000000000012','FV123','1234',1,NULL,'2025-11-19','11:19:11',1,'CALLE DEL ......','U',3,1,NULL,1);
-
 /*Table structure for table `accidente_conductor` */
 
 DROP TABLE IF EXISTS `accidente_conductor`;
@@ -79,16 +63,6 @@ CREATE TABLE `accidente_conductor` (
   CONSTRAINT `fk_accidente_conductor_acc` FOREIGN KEY (`accidente_id`) REFERENCES `accidente` (`id`),
   CONSTRAINT `fk_accidente_conductor_persona` FOREIGN KEY (`persona_id`) REFERENCES `persona` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-
-/*Data for the table `accidente_conductor` */
-
-insert  into `accidente_conductor`(`id`,`accidente_id`,`persona_id`,`estado`) values 
-(1,1,1,0),
-(2,8,1,1),
-(3,10,4,1),
-(4,1,5,1),
-(5,11,6,1),
-(6,12,4,0);
 
 /*Table structure for table `accidente_detalle` */
 
@@ -113,17 +87,7 @@ CREATE TABLE `accidente_detalle` (
   CONSTRAINT `fk_accidente_detalle_acc` FOREIGN KEY (`accidente_id`) REFERENCES `accidente` (`id`),
   CONSTRAINT `fk_accidente_detalle_procedimiento` FOREIGN KEY (`procedimiento_id`) REFERENCES `procedimiento` (`id`),
   CONSTRAINT `fk_accidente_detalle_tipo` FOREIGN KEY (`tipo_servicio_id`) REFERENCES `tipo_servicio` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-
-/*Data for the table `accidente_detalle` */
-
-insert  into `accidente_detalle`(`id`,`accidente_id`,`tipo_servicio_id`,`procedimiento_id`,`codigo_servicio`,`descripcion`,`cantidad`,`valor_unitario`,`valor_facturado`,`valor_reclamado`,`estado`) values 
-(7,1,2,1,'15102','Desbridamiento por lesión',0,218000,218000,218000,1),
-(8,1,2,1,'39003','15102-HONORARIOS CIRUJANO-GR-05',1,218000,218000,218000,1),
-(9,1,2,1,'39103','15102-HONORARIOS ANESTESIA-GR-05',1,142500,142500,142500,1),
-(10,1,2,1,'39207','15102-DERECHOS DE SALA -GR-05',1,388900,388900,388900,1),
-(11,1,3,2,NULL,'Transporte primario ambulancia básica',1,120000,120000,120000,1),
-(14,12,5,2,'903310','Transporte primario ambulancia básica',1,120000,120000,120000,1);
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Table structure for table `accidente_medico_tratante` */
 
@@ -134,8 +98,8 @@ CREATE TABLE `accidente_medico_tratante` (
   `accidente_id` bigint(20) unsigned NOT NULL COMMENT 'FK accidente',
   `accidente_victima_id` bigint(20) unsigned NOT NULL COMMENT 'FK víctima atendida',
   `persona_id` bigint(20) unsigned NOT NULL COMMENT 'FK persona del médico tratante',
-  `fecha_ingreso` datetime DEFAULT NULL COMMENT '80-81: fecha/hora de ingreso a IPS',
-  `fecha_egreso` datetime DEFAULT NULL COMMENT '82-83: fecha/hora de egreso de IPS',
+  `fecha_ingreso` date DEFAULT NULL COMMENT '80: fecha de ingreso a IPS',
+  `fecha_egreso` date DEFAULT NULL COMMENT '82: fecha de egreso de IPS',
   `diagnostico_ingreso` char(4) CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci DEFAULT NULL COMMENT '84: CIE10 principal ingreso',
   `diagnostico_ingreso_sec1` char(4) CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci DEFAULT NULL COMMENT '85: CIE10 ingreso asociado 1',
   `diagnostico_ingreso_sec2` char(4) CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci DEFAULT NULL COMMENT '86: CIE10 ingreso asociado 2',
@@ -147,6 +111,8 @@ CREATE TABLE `accidente_medico_tratante` (
   `estado` enum('activo','inactivo') CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci NOT NULL DEFAULT 'activo' COMMENT 'Estatus lógico del vínculo',
   `creado_en` timestamp NULL DEFAULT current_timestamp() COMMENT 'Fecha de creación',
   `actualizado_en` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Fecha de última actualización',
+  `hora_ingreso` time DEFAULT NULL COMMENT '81: hora de ingreso a IPS',
+  `hora_egreso` time DEFAULT NULL COMMENT '83: hora de egreso de IPS',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_medico_victima` (`accidente_victima_id`),
   KEY `fk_am_trat_accidente` (`accidente_id`),
@@ -154,12 +120,7 @@ CREATE TABLE `accidente_medico_tratante` (
   CONSTRAINT `fk_am_trat_accidente` FOREIGN KEY (`accidente_id`) REFERENCES `accidente` (`id`),
   CONSTRAINT `fk_am_trat_persona` FOREIGN KEY (`persona_id`) REFERENCES `persona` (`id`),
   CONSTRAINT `fk_am_trat_victima` FOREIGN KEY (`accidente_victima_id`) REFERENCES `accidente_victima` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
-
-/*Data for the table `accidente_medico_tratante` */
-
-insert  into `accidente_medico_tratante`(`id`,`accidente_id`,`accidente_victima_id`,`persona_id`,`fecha_ingreso`,`fecha_egreso`,`diagnostico_ingreso`,`diagnostico_ingreso_sec1`,`diagnostico_ingreso_sec2`,`diagnostico_egreso`,`diagnostico_egreso_sec1`,`diagnostico_egreso_sec2`,`servicio_uci`,`dias_uci`,`estado`,`creado_en`,`actualizado_en`) values 
-(1,1,3,7,'2025-11-17 14:45:00','2025-11-20 09:30:00','S010','T149',NULL,'S110',NULL,NULL,1,2,'activo','2025-11-19 01:37:53','2025-11-19 01:37:53');
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 /*Table structure for table `accidente_propietario` */
 
@@ -176,18 +137,6 @@ CREATE TABLE `accidente_propietario` (
   CONSTRAINT `fk_accidente_propietario_acc` FOREIGN KEY (`accidente_id`) REFERENCES `accidente` (`id`),
   CONSTRAINT `fk_accidente_propietario_persona` FOREIGN KEY (`persona_id`) REFERENCES `persona` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-
-/*Data for the table `accidente_propietario` */
-
-insert  into `accidente_propietario`(`id`,`accidente_id`,`persona_id`,`estado`) values 
-(1,1,4,0),
-(2,8,1,1),
-(3,10,6,1),
-(4,11,6,0),
-(5,11,1,1),
-(6,1,4,0),
-(7,12,6,1),
-(8,1,6,1);
 
 /*Table structure for table `accidente_remision` */
 
@@ -222,8 +171,6 @@ CREATE TABLE `accidente_remision` (
   CONSTRAINT `chk_acc_rem_tipo` CHECK (`tipo_referencia` in (1,2,3))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
-/*Data for the table `accidente_remision` */
-
 /*Table structure for table `accidente_totales` */
 
 DROP TABLE IF EXISTS `accidente_totales`;
@@ -243,11 +190,6 @@ CREATE TABLE `accidente_totales` (
   CONSTRAINT `fk_totales_accidente` FOREIGN KEY (`accidente_id`) REFERENCES `accidente` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
-/*Data for the table `accidente_totales` */
-
-insert  into `accidente_totales`(`id`,`accidente_id`,`total_facturado_gmq`,`total_reclamado_gmq`,`total_facturado_transporte`,`total_reclamado_transporte`,`manifestacion_servicios`,`descripcion_evento`,`estado`) values 
-(1,1,908400,908400,120000,120000,1,'Accidente en Av. Caracas con Cl 45, víctima trasladada al primer centro de atención.',1);
-
 /*Table structure for table `accidente_victima` */
 
 DROP TABLE IF EXISTS `accidente_victima`;
@@ -265,16 +207,6 @@ CREATE TABLE `accidente_victima` (
   CONSTRAINT `fk_accidente_victima_persona` FOREIGN KEY (`persona_id`) REFERENCES `persona` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
-/*Data for the table `accidente_victima` */
-
-insert  into `accidente_victima`(`id`,`accidente_id`,`persona_id`,`condicion_codigo`,`estado`) values 
-(1,1,8,'1',1),
-(3,8,3,'2',1),
-(4,9,1,'1',1),
-(5,10,4,'1',1),
-(6,11,6,'1',1),
-(7,12,4,'1',1);
-
 /*Table structure for table `departamento` */
 
 DROP TABLE IF EXISTS `departamento`;
@@ -290,12 +222,6 @@ CREATE TABLE `departamento` (
   CONSTRAINT `fk_departamento_pais` FOREIGN KEY (`pais_id`) REFERENCES `pais` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
-/*Data for the table `departamento` */
-
-insert  into `departamento`(`id`,`pais_id`,`codigo`,`nombre`,`estado`) values 
-(1,1,'011','Bogotá D.C.',1),
-(2,1,'076','Valle del Cauca',1);
-
 /*Table structure for table `estado_aseguramiento` */
 
 DROP TABLE IF EXISTS `estado_aseguramiento`;
@@ -308,17 +234,6 @@ CREATE TABLE `estado_aseguramiento` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `codigo` (`codigo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-
-/*Data for the table `estado_aseguramiento` */
-
-insert  into `estado_aseguramiento`(`id`,`codigo`,`descripcion`,`estado`) values 
-(1,'1','Asegurado',1),
-(2,'2','No asegurado',1),
-(3,'3','Vehículo fantasma',1),
-(4,'4','Póliza falsa',1),
-(5,'6','Asegurado D.2497',1),
-(6,'7','No asegurado – propietario indeterminado',1),
-(7,'8','No asegurado – sin placa',1);
 
 /*Table structure for table `municipio` */
 
@@ -336,13 +251,6 @@ CREATE TABLE `municipio` (
   CONSTRAINT `fk_municipio_departamento` FOREIGN KEY (`departamento_id`) REFERENCES `departamento` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
-/*Data for the table `municipio` */
-
-insert  into `municipio`(`id`,`departamento_id`,`codigo_dane`,`codigo_postal`,`nombre`,`estado`) values 
-(1,1,'11001','110111','Bogotá',1),
-(2,2,'76001','760001','Cali',1),
-(5,1,'11002','11001','avila',1);
-
 /*Table structure for table `naturaleza_evento` */
 
 DROP TABLE IF EXISTS `naturaleza_evento`;
@@ -356,30 +264,6 @@ CREATE TABLE `naturaleza_evento` (
   UNIQUE KEY `codigo` (`codigo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
-/*Data for the table `naturaleza_evento` */
-
-insert  into `naturaleza_evento`(`id`,`codigo`,`descripcion`,`estado`) values 
-(1,'01','Accidente de tránsito',1),
-(2,'02','Sismo',1),
-(3,'03','Maremoto',1),
-(4,'04','Erupción volcánica',1),
-(5,'05','Deslizamiento de tierra',1),
-(6,'06','Inundación',1),
-(7,'07','Avalancha',1),
-(8,'08','Incendio natural',1),
-(9,'09','Explosión terrorista',1),
-(10,'10','Incendio terrorista',1),
-(11,'11','Combate',1),
-(12,'12','Ataques a Municipios',1),
-(13,'13','Masacre',1),
-(14,'14','Desplazados',1),
-(15,'15','Mina antipersonal',1),
-(16,'16','Huracán',1),
-(17,'17','Otro',1),
-(18,'25','Rayo',1),
-(19,'26','Vendaval',1),
-(20,'27','Tornado',1);
-
 /*Table structure for table `pais` */
 
 DROP TABLE IF EXISTS `pais`;
@@ -392,12 +276,6 @@ CREATE TABLE `pais` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `codigo` (`codigo`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-
-/*Data for the table `pais` */
-
-insert  into `pais`(`id`,`codigo`,`nombre`,`estado`) values 
-(1,'COL','Colombia',1),
-(2,'VEN','Venezuela',1);
 
 /*Table structure for table `persona` */
 
@@ -429,18 +307,6 @@ CREATE TABLE `persona` (
   CONSTRAINT `chk_persona_fallecimiento` CHECK (`fecha_fallecimiento` is null or `fecha_fallecimiento` >= `fecha_nacimiento`)
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
-/*Data for the table `persona` */
-
-insert  into `persona`(`id`,`tipo_identificacion_id`,`numero_identificacion`,`primer_nombre`,`segundo_nombre`,`primer_apellido`,`segundo_apellido`,`sexo_id`,`fecha_nacimiento`,`fecha_fallecimiento`,`direccion`,`telefono`,`municipio_residencia_id`,`fecha_registro`,`estado`) values 
-(1,1,'1012345678','Carlos','Andrés','Pérez','Gómez',2,'1990-05-12',NULL,'Cra 10 #20-30','3101234567',1,'2025-11-17 16:17:00',1),
-(2,6,'909090','María','Lucía','Rodríguez','López',1,'2007-08-08',NULL,'www','www',5,'2025-11-17 16:17:00',1),
-(3,1,'1122334455','Laura',NULL,'García','Martínez',1,'1985-02-18',NULL,'Av 68 #30-21','3001112233',1,'2025-11-17 16:17:00',1),
-(4,1,'1143135147','kevin','albert','baldelamar','quinto',1,'1992-01-01',NULL,'calle k','123231312',1,'2025-11-17 17:09:17',1),
-(5,1,'11112','kevin',NULL,'bal',NULL,3,'2000-01-01',NULL,'mekekeke','11111',2,'2025-11-17 18:16:16',1),
-(6,1,'12345','tony',NULL,'strart',NULL,2,'2025-11-17',NULL,'ok','12121212',1,'2025-11-17 19:45:40',1),
-(7,1,'1267','kevin',NULL,'quinto',NULL,1,'2025-11-17',NULL,'xzfsdfsdf','213123',1,'2025-11-17 19:48:08',1),
-(8,11,'909090','María','Lucía','Rodríguez','López',1,'2007-08-08',NULL,'www','121212',1,'2025-11-18 12:04:41',1);
-
 /*Table structure for table `persona_config` */
 
 DROP TABLE IF EXISTS `persona_config`;
@@ -458,11 +324,6 @@ CREATE TABLE `persona_config` (
   UNIQUE KEY `uq_persona_config` (`persona_id`),
   CONSTRAINT `fk_persona_config_persona` FOREIGN KEY (`persona_id`) REFERENCES `persona` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
-
-/*Data for the table `persona_config` */
-
-insert  into `persona_config`(`id`,`persona_id`,`es_medico`,`registro_medico`,`especialidad`,`estado`,`creado_en`,`actualizado_en`) values 
-(1,7,1,'RM-123456','Urgencias',1,'2025-11-19 01:40:21','2025-11-19 01:40:21');
 
 /*Table structure for table `prestador_salud` */
 
@@ -483,11 +344,6 @@ CREATE TABLE `prestador_salud` (
   CONSTRAINT `fk_prestador_municipio` FOREIGN KEY (`municipio_id`) REFERENCES `municipio` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
-/*Data for the table `prestador_salud` */
-
-insert  into `prestador_salud`(`id`,`codigo_habilitacion`,`razon_social`,`nit`,`telefono`,`municipio_id`,`direccion`,`estado`) values 
-(1,'123456789012','Clínica Central SAS','900123456','6015555555',1,'Cra 15 #100-20',1);
-
 /*Table structure for table `procedimiento` */
 
 DROP TABLE IF EXISTS `procedimiento`;
@@ -503,12 +359,6 @@ CREATE TABLE `procedimiento` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_procedimiento_codigo` (`codigo`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-
-/*Data for the table `procedimiento` */
-
-insert  into `procedimiento`(`id`,`codigo`,`descripcion`,`codigo_soat`,`valor`,`estado`,`es_traslado_primario`) values 
-(1,'902210','Honorarios cirujano grupo 5','39003',218000,'ACTIVO',0),
-(2,'903310','Transporte primario ambulancia básica','39003',120000,'ACTIVO',1);
 
 /*Table structure for table `propietario_historial` */
 
@@ -536,8 +386,6 @@ CREATE TABLE `propietario_historial` (
   KEY `idx_ph_documento_nuevo` (`documento_nuevo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Auditoría de cambios en propietarios asociados a accidentes';
 
-/*Data for the table `propietario_historial` */
-
 /*Table structure for table `sexo` */
 
 DROP TABLE IF EXISTS `sexo`;
@@ -550,13 +398,6 @@ CREATE TABLE `sexo` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `codigo` (`codigo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-
-/*Data for the table `sexo` */
-
-insert  into `sexo`(`id`,`codigo`,`descripcion`,`estado`) values 
-(1,'F','Femenino',1),
-(2,'M','Masculino',1),
-(3,'O','Otro',1);
 
 /*Table structure for table `tipo_identificacion` */
 
@@ -571,23 +412,6 @@ CREATE TABLE `tipo_identificacion` (
   UNIQUE KEY `codigo` (`codigo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
-/*Data for the table `tipo_identificacion` */
-
-insert  into `tipo_identificacion`(`id`,`codigo`,`descripcion`,`estado`) values 
-(1,'CC','Cédula de ciudadanía',1),
-(2,'CE','Cédula de extranjería',1),
-(3,'CN','Certificado de nacido vivo',1),
-(4,'PA','Pasaporte',1),
-(5,'RC','Registro civil',1),
-(6,'TI','Tarjeta de identidad',1),
-(7,'AS','Adulto sin identificación',1),
-(8,'MS','Menor sin identificación',1),
-(9,'PT','Permiso por protección temporal',1),
-(10,'PE','Permiso especial de permanencia',1),
-(11,'SC','Salvoconducto',1),
-(12,'CD','Carné diplomático',1),
-(13,'DE','Documento extranjero',1);
-
 /*Table structure for table `tipo_servicio` */
 
 DROP TABLE IF EXISTS `tipo_servicio`;
@@ -601,18 +425,6 @@ CREATE TABLE `tipo_servicio` (
   UNIQUE KEY `codigo` (`codigo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
-/*Data for the table `tipo_servicio` */
-
-insert  into `tipo_servicio`(`id`,`codigo`,`descripcion`,`estado`) values 
-(1,'1','Medicamentos',1),
-(2,'2','Procedimientos',1),
-(3,'3','Transporte primario',1),
-(4,'4','Transporte secundario',1),
-(5,'5','Insumos',1),
-(6,'6','Dispositivos médicos',1),
-(7,'7','Material de osteosíntesis',1),
-(8,'8','Procedimiento no incluido en manual',1);
-
 /*Table structure for table `tipo_vehiculo` */
 
 DROP TABLE IF EXISTS `tipo_vehiculo`;
@@ -625,25 +437,6 @@ CREATE TABLE `tipo_vehiculo` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `codigo` (`codigo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-
-/*Data for the table `tipo_vehiculo` */
-
-insert  into `tipo_vehiculo`(`id`,`codigo`,`descripcion`,`estado`) values 
-(1,'01','Automóvil',1),
-(2,'02','Bus',1),
-(3,'03','Buseta',1),
-(4,'04','Camión',1),
-(5,'05','Camioneta',1),
-(6,'06','Campero',1),
-(7,'07','Microbús',1),
-(8,'08','Tractocamión',1),
-(9,'10','Motocicleta',1),
-(10,'14','Motocarro',1),
-(11,'17','Mototriciclo',1),
-(12,'19','Cuatrimoto',1),
-(13,'20','Moto extranjera',1),
-(14,'21','Vehículo extranjero',1),
-(15,'22','Volqueta',1);
 
 /*Table structure for table `vehiculo` */
 
@@ -671,14 +464,6 @@ CREATE TABLE `vehiculo` (
   CONSTRAINT `fk_vehiculo_tipo` FOREIGN KEY (`tipo_vehiculo_id`) REFERENCES `tipo_vehiculo` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
-/*Data for the table `vehiculo` */
-
-insert  into `vehiculo`(`id`,`placa`,`marca`,`tipo_vehiculo_id`,`aseguradora_codigo`,`numero_poliza`,`vigencia_inicio`,`vigencia_fin`,`estado_aseguramiento_id`,`propietario_id`,`estado`) values 
-(1,'ABC123','Chevrolet',1,'AT0012','SOAT-456789','2026-05-10','2027-05-10',1,4,1),
-(2,'ABC122','Chevrolet',1,'AT0012','SOAT-456789','2023-01-01','2023-12-31',1,4,1),
-(3,'CDE33D','toyota',1,'at4554','dfsdf','2024-11-17','2025-11-17',1,6,1),
-(4,'RTY567','dsfsf',1,'sd34','fsdfsd213123','2024-11-17','2025-11-17',1,6,1);
-
 /*Table structure for table `vehiculo_historial` */
 
 DROP TABLE IF EXISTS `vehiculo_historial`;
@@ -702,8 +487,6 @@ CREATE TABLE `vehiculo_historial` (
   KEY `idx_vh_placa_anterior` (`placa_anterior`),
   KEY `idx_vh_placa_nueva` (`placa_nueva`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Auditoría de cambios en vehículos asociados a accidentes';
-
-/*Data for the table `vehiculo_historial` */
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;

@@ -26,6 +26,7 @@ class AccidenteForm(QWidget):
     # Señales
     guardar_accidente_signal = Signal(dict)
     actualizar_accidente_signal = Signal(dict)
+    anular_accidente_signal = Signal(int)  # Emite el ID del accidente a anular
     buscar_accidente_signal = Signal()
     
     def __init__(self):
@@ -142,6 +143,22 @@ class AccidenteForm(QWidget):
         self.btn_actualizar_accidente.setVisible(False)
         btn_toolbar.addWidget(self.btn_actualizar_accidente)
         
+        self.btn_anular_accidente = QPushButton("❌ Anular")
+        self.btn_anular_accidente.setMinimumWidth(100)
+        self.btn_anular_accidente.clicked.connect(self._on_anular_accidente)
+        self.btn_anular_accidente.setVisible(False)
+        self.btn_anular_accidente.setStyleSheet("""
+            QPushButton {
+                background-color: #f44336;
+                color: white;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #da190b;
+            }
+        """)
+        btn_toolbar.addWidget(self.btn_anular_accidente)
+        
         btn_toolbar.addStretch()
         
         # Label para mostrar ID del accidente guardado
@@ -170,12 +187,18 @@ class AccidenteForm(QWidget):
         self.tab_victima = self._create_victima_tab()
         self.tab_conductor = self._create_conductor_tab()
         self.tab_propietario = self._create_propietario_tab()
+        self.tab_vehiculo = self._create_vehiculo_tab()
+        self.tab_medico_tratante = self._create_medico_tratante_tab()
+        self.tab_remision = self._create_remision_tab()
         self.tab_detalle = self._create_detalle_tab()
         self.tab_totales = self._create_totales_tab()
         
         self.tabs.addTab(self.tab_victima, "👤 Víctima")
         self.tabs.addTab(self.tab_conductor, "🚗 Conductor")
         self.tabs.addTab(self.tab_propietario, "📝 Propietario")
+        self.tabs.addTab(self.tab_vehiculo, "🚙 Vehículo")
+        self.tabs.addTab(self.tab_medico_tratante, "🩺 Médico Tratante")
+        self.tabs.addTab(self.tab_remision, "🚑 Remisiones")
         self.tabs.addTab(self.tab_detalle, "📋 Detalle (FURIPS2)")
         self.tabs.addTab(self.tab_totales, "💰 Totales / Declaración")
         
@@ -255,12 +278,22 @@ class AccidenteForm(QWidget):
         self.combo_zona.setFixedWidth(90)
         grid.addWidget(self.combo_zona, 2, 7)
         
-        # Fila 3: Dirección del Evento (campo grande - ocupa toda la fila)
+        # Fila 3: Dirección del Evento y Descripción
         grid.addWidget(QLabel("Dirección del Evento:"), 3, 0)
         self.txt_direccion = QLineEdit()
         self.txt_direccion.setMaxLength(200)
         self.txt_direccion.setPlaceholderText("Dirección donde ocurrió el evento (máx. 200 caracteres)")
-        grid.addWidget(self.txt_direccion, 3, 1, 1, 7)
+        grid.addWidget(self.txt_direccion, 3, 1, 1, 3)
+        
+        grid.addWidget(QLabel("Descripción:"), 3, 4)
+        self.txt_descripcion = QLineEdit()
+        self.txt_descripcion.setPlaceholderText("Descripción del evento (solo letras)")
+        # Validación: solo letras y espacios
+        from PySide6.QtGui import QRegularExpressionValidator
+        from PySide6.QtCore import QRegularExpression
+        regex_letras = QRegularExpression("[A-Za-zÁÉÍÓÚáéíóúÑñ ]*")
+        self.txt_descripcion.setValidator(QRegularExpressionValidator(regex_letras))
+        grid.addWidget(self.txt_descripcion, 3, 5, 1, 3)
         
         # Fila 4: Placa, Estado Aseguramiento
         grid.addWidget(QLabel("Placa del Vehículo:"), 4, 0)
@@ -300,17 +333,29 @@ class AccidenteForm(QWidget):
         self.propietario_form = PropietarioForm()
         return self.propietario_form
     
+    def _create_vehiculo_tab(self) -> QWidget:
+        """Crea la pestaña de vehículo."""
+        from app.ui.views.vehiculo_form import VehiculoForm
+        self.vehiculo_form = VehiculoForm()
+        return self.vehiculo_form
+    
     def _create_detalle_tab(self) -> QWidget:
         """Crea la pestaña de detalle."""
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
-        
-        label = QLabel("Tabla de detalles FURIPS2 - A implementar por presenter")
-        layout.addWidget(label)
-        
-        # TODO: Agregar tabla de detalles
-        
-        return widget
+        from app.ui.views.detalle_form import DetalleForm
+        self.detalle_form = DetalleForm()
+        return self.detalle_form
+    
+    def _create_medico_tratante_tab(self) -> QWidget:
+        """Crea la pestaña de médico tratante."""
+        from app.ui.views.medico_tratante_form import MedicoTratanteForm
+        self.medico_tratante_form = MedicoTratanteForm()
+        return self.medico_tratante_form
+    
+    def _create_remision_tab(self) -> QWidget:
+        """Crea la pestaña de remisiones."""
+        from app.ui.views.remision_form import RemisionForm
+        self.remision_form = RemisionForm()
+        return self.remision_form
     
     def _create_totales_tab(self) -> QWidget:
         """Crea la pestaña de totales."""
@@ -335,6 +380,7 @@ class AccidenteForm(QWidget):
         self.txt_siras.clear()
         self.txt_otro_evento.clear()
         self.txt_direccion.clear()
+        self.txt_descripcion.clear()
         self.txt_placa.clear()
         
         # Resetear combos a índice 0
@@ -351,25 +397,52 @@ class AccidenteForm(QWidget):
         # Ocultar el label del accidente guardado
         self.lbl_accidente_id.setVisible(False)
         
-        # Resetear botones: mostrar Guardar, ocultar Actualizar
+        # Resetear botones: mostrar Guardar, ocultar Actualizar y Anular
         self.btn_guardar_accidente.setVisible(True)
         self.btn_guardar_accidente.setEnabled(True)
         self.btn_actualizar_accidente.setVisible(False)
+        self.btn_anular_accidente.setVisible(False)
         
-        # Limpiar los 3 tabs (Víctima, Conductor, Propietario)
+        # Limpiar todos los tabs
+        self.vehiculo_form.limpiar_formulario()
         self.victima_form.limpiar_formulario()
         self.conductor_form.limpiar_formulario()
         self.propietario_form.limpiar_formulario()
+        self.medico_tratante_form.limpiar_formulario()
+        self.remision_form.limpiar_formulario()
+        self.remision_form.limpiar_tabla()
+        self.detalle_form.limpiar_formulario()
     
     def _on_guardar_accidente(self):
         """Maneja el clic en guardar accidente."""
         datos = self.get_datos_accidente()
         self.guardar_accidente_signal.emit(datos)
     
+    def _on_anular_accidente(self):
+        """Maneja el clic en anular accidente."""
+        if not self.accidente_id_actual:
+            print("❌ No hay accidente cargado para anular")
+            return
+        
+        # Confirmar anulación
+        from PySide6.QtWidgets import QMessageBox
+        respuesta = QMessageBox.question(
+            self,
+            "Confirmar Anulación",
+            f"¿Está seguro de anular el accidente #{self.txt_consecutivo.text()}?\n\n"
+            "El accidente no se eliminará, solo cambiará su estado a ANULADO.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if respuesta == QMessageBox.StandardButton.Yes:
+            self.anular_accidente_signal.emit(self.accidente_id_actual)
+    
     def get_datos_accidente(self) -> dict:
         """Obtiene los datos del formulario."""
-        # Obtener dirección
+        # Obtener dirección y descripción
         direccion_texto = self.txt_direccion.text().strip()
+        descripcion_texto = self.txt_descripcion.text().strip()
         
         return {
             "prestador_id": self.combo_prestador.currentData(),
@@ -382,6 +455,7 @@ class AccidenteForm(QWidget):
             "hora_evento": self.time_evento.time().toPython(),
             "municipio_evento_id": self.combo_municipio.currentData(),
             "direccion_evento": direccion_texto,
+            "descripcion": descripcion_texto or None,
             "zona": "U" if self.combo_zona.currentText() == "Urbana" else "R" if self.combo_zona.currentText() == "Rural" else None,
             "vehiculo_id": None,  # TODO: Obtener desde tab vehículo
             "estado_aseguramiento_id": self.combo_estado_aseg.currentData(),
@@ -420,9 +494,10 @@ class AccidenteForm(QWidget):
         # Actualizar el campo consecutivo con el valor guardado (por si fue autogenerado)
         self.txt_consecutivo.setText(consecutivo)
         
-        # Cambiar botones: ocultar Guardar, mostrar Actualizar
+        # Cambiar botones: ocultar Guardar, mostrar Actualizar y Anular
         self.btn_guardar_accidente.setVisible(False)
         self.btn_actualizar_accidente.setVisible(True)
+        self.btn_anular_accidente.setVisible(True)
     
     def _on_buscar(self):
         """Maneja el clic en buscar accidente."""
@@ -470,6 +545,7 @@ class AccidenteForm(QWidget):
                 self.combo_municipio.setCurrentIndex(idx)
         
         self.txt_direccion.setText(accidente.get("direccion_evento", "") or "")
+        self.txt_descripcion.setText(accidente.get("descripcion", "") or "")
         
         zona = accidente.get("zona")
         if zona == "U":

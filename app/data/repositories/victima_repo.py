@@ -20,10 +20,29 @@ class VictimaRepository:
         return victima
     
     def delete(self, victima_id: int):
-        """Elimina una víctima."""
+        """Elimina una víctima (soft delete - cambia estado a 0)."""
         victima = self.get_by_id(victima_id)
         if victima:
-            self.session.delete(victima)
+            victima.estado = 0
+            self.session.flush()
+    
+    def anular(self, victima_id: int) -> bool:
+        """Anula una víctima (soft delete - cambia estado a 0)."""
+        victima = self.get_by_id(victima_id)
+        if victima:
+            victima.estado = 0
+            self.session.flush()
+            return True
+        return False
+    
+    def reactivar(self, victima_id: int) -> bool:
+        """Reactiva una víctima anulada (cambia estado a 1)."""
+        victima = self.get_by_id(victima_id)
+        if victima:
+            victima.estado = 1
+            self.session.flush()
+            return True
+        return False
     
     def get_by_id(self, victima_id: int) -> Optional[AccidenteVictima]:
         """Obtiene una víctima por ID con relaciones cargadas."""
@@ -40,7 +59,7 @@ class VictimaRepository:
         )
     
     def get_by_accidente(self, accidente_id: int) -> List[AccidenteVictima]:
-        """Obtiene todas las víctimas de un accidente."""
+        """Obtiene todas las víctimas activas de un accidente (estado=1)."""
         from app.data.models import Persona, TipoIdentificacion, Sexo
         return (
             self.session.query(AccidenteVictima)
@@ -48,7 +67,10 @@ class VictimaRepository:
                 joinedload(AccidenteVictima.persona).joinedload(Persona.tipo_identificacion),
                 joinedload(AccidenteVictima.persona).joinedload(Persona.sexo)
             )
-            .filter(AccidenteVictima.accidente_id == accidente_id)
+            .filter(
+                AccidenteVictima.accidente_id == accidente_id,
+                AccidenteVictima.estado == 1
+            )
             .all()
         )
     
@@ -57,12 +79,13 @@ class VictimaRepository:
         persona_id: int, 
         accidente_id: int
     ) -> Optional[AccidenteVictima]:
-        """Verifica si existe una víctima con esa persona en ese accidente."""
+        """Verifica si existe una víctima activa con esa persona en ese accidente (estado=1)."""
         return (
             self.session.query(AccidenteVictima)
             .filter(
                 AccidenteVictima.persona_id == persona_id,
-                AccidenteVictima.accidente_id == accidente_id
+                AccidenteVictima.accidente_id == accidente_id,
+                AccidenteVictima.estado == 1
             )
             .first()
         )

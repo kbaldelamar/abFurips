@@ -17,7 +17,8 @@ class DetalleRepository:
     
     def get_by_accidente(self, accidente_id: int) -> List[AccidenteDetalle]:
         """Obtiene todos los detalles de un accidente."""
-        return (
+        print(f"📊 DetalleRepository.get_by_accidente() - Filtrando por accidente_id={accidente_id}")
+        query = (
             self.session.query(AccidenteDetalle)
             .options(
                 joinedload(AccidenteDetalle.tipo_servicio),
@@ -25,8 +26,15 @@ class DetalleRepository:
             )
             .filter(AccidenteDetalle.accidente_id == accidente_id)
             .order_by(AccidenteDetalle.id)
-            .all()
         )
+        
+        # Log del SQL generado
+        print(f"🔍 SQL Query: {query}")
+        
+        result = query.all()
+        print(f"📦 Resultado: {len(result)} registros encontrados")
+        
+        return result
     
     def create(self, detalle: AccidenteDetalle) -> AccidenteDetalle:
         """Crea un nuevo detalle."""

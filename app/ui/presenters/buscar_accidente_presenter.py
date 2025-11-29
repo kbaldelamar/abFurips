@@ -23,12 +23,22 @@ class BuscarAccidentePresenter:
                 # Convertir a diccionarios para la vista
                 accidentes_dict = []
                 for acc in resultados:
+                    # Obtener placa del vehículo si existe
+                    placa = ""
+                    if hasattr(acc, 'vehiculo_id') and acc.vehiculo_id:
+                        from app.data.repositories.vehiculo_repo import VehiculoRepository
+                        vehiculo_repo = VehiculoRepository(session)
+                        vehiculo = vehiculo_repo.get_by_id(acc.vehiculo_id)
+                        if vehiculo:
+                            placa = vehiculo.placa or ""
+                    
                     accidentes_dict.append({
                         "id": acc.id,
                         "consecutivo": acc.numero_consecutivo,
                         "factura": acc.numero_factura,
                         "fecha_evento": acc.fecha_evento,
                         "hora_evento": acc.hora_evento.strftime("%H:%M") if acc.hora_evento else "",
+                        "placa": placa,
                         "tipo_identificacion": acc.tipo_identificacion if hasattr(acc, 'tipo_identificacion') else "",
                         "numero_identificacion": acc.numero_identificacion if hasattr(acc, 'numero_identificacion') else "",
                         "primer_nombre": acc.primer_nombre if hasattr(acc, 'primer_nombre') else "",

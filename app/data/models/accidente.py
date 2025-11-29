@@ -23,9 +23,11 @@ class Accidente(Base):
     hora_evento = Column(Time, nullable=False, comment="Hora del evento")
     municipio_evento_id = Column(Integer, ForeignKey("municipio.id"), nullable=False, comment="FK municipio del evento")
     direccion_evento = Column(String(200), nullable=False, comment="Dirección de ocurrencia")
+    descripcion = Column(String, nullable=True, comment="Descripción del evento")
     zona = Column(Enum("U", "R", name="zona_evento"), nullable=True, comment="Zona urbana/rural")
     vehiculo_id = Column(BigInteger, ForeignKey("vehiculo.id"), nullable=True, comment="FK vehículo involucrado")
     estado_aseguramiento_id = Column(Integer, ForeignKey("estado_aseguramiento.id"), nullable=False, comment="FK estado del aseguramiento")
+    estado = Column(Integer, nullable=False, default=1, comment="1 activo, 0 inactivo")
     
     # Relaciones
     prestador = relationship("PrestadorSalud", back_populates="accidentes")
@@ -45,6 +47,10 @@ class Accidente(Base):
     # Totales FURIPS1
     totales = relationship("AccidenteTotales", back_populates="accidente", uselist=False, cascade="all, delete-orphan")
     
+    # Médicos tratantes y remisiones
+    medicos_tratantes = relationship("AccidenteMedicoTratante", back_populates="accidente", cascade="all, delete-orphan")
+    remisiones = relationship("AccidenteRemision", back_populates="accidente", cascade="all, delete-orphan")
+    
     def __repr__(self) -> str:
         return f"<Accidente(id={self.id}, consecutivo='{self.numero_consecutivo}', fecha='{self.fecha_evento}')>"
 
@@ -59,20 +65,12 @@ class AccidenteVictima(Base):
     accidente_id = Column(BigInteger, ForeignKey("accidente.id"), nullable=False, comment="FK accidente")
     persona_id = Column(BigInteger, ForeignKey("persona.id"), nullable=False, comment="FK persona víctima")
     condicion_codigo = Column(String(1), nullable=True, comment="1 conductor, 2 peatón, 3 ocupante, 4 ciclista")
-    fecha_ingreso = Column(Date, nullable=True, comment="Fecha/hora de ingreso a IPS")
-    fecha_egreso = Column(Date, nullable=True, comment="Fecha/hora de egreso de IPS")
-    diagnostico_ingreso = Column(String(4), nullable=True, comment="CIE10 diagnóstico principal ingreso")
-    diagnostico_ingreso_sec1 = Column(String(4), nullable=True, comment="CIE10 diagnóstico ingreso asociado 1")
-    diagnostico_ingreso_sec2 = Column(String(4), nullable=True, comment="CIE10 diagnóstico ingreso asociado 2")
-    diagnostico_egreso = Column(String(4), nullable=True, comment="CIE10 diagnóstico principal egreso")
-    diagnostico_egreso_sec1 = Column(String(4), nullable=True, comment="CIE10 diagnóstico egreso asociado 1")
-    diagnostico_egreso_sec2 = Column(String(4), nullable=True, comment="CIE10 diagnóstico egreso asociado 2")
-    servicio_uci = Column(Integer, nullable=True, comment="0 no, 1 sí - uso de UCI")
-    dias_uci = Column(Integer, nullable=True, comment="Días en UCI")
+    estado = Column(Integer, nullable=False, default=1, comment="1 activo, 0 inactivo")
     
     # Relaciones
     accidente = relationship("Accidente", back_populates="victimas")
     persona = relationship("Persona", back_populates="como_victima")
+    medico_tratante = relationship("AccidenteMedicoTratante", back_populates="victima", uselist=False, cascade="all, delete-orphan")
     
     def __repr__(self) -> str:
         return f"<AccidenteVictima(id={self.id}, accidente_id={self.accidente_id}, persona_id={self.persona_id})>"
@@ -87,6 +85,7 @@ class AccidenteConductor(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True, comment="PK conductor vinculado")
     accidente_id = Column(BigInteger, ForeignKey("accidente.id"), nullable=False, comment="FK accidente")
     persona_id = Column(BigInteger, ForeignKey("persona.id"), nullable=False, comment="FK persona conductor")
+    estado = Column(Integer, nullable=False, default=1, comment="1 activo, 0 inactivo")
     
     # Relaciones
     accidente = relationship("Accidente", back_populates="conductores")
@@ -105,6 +104,7 @@ class AccidentePropietario(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True, comment="PK propietario vinculado")
     accidente_id = Column(BigInteger, ForeignKey("accidente.id"), nullable=False, comment="FK accidente")
     persona_id = Column(BigInteger, ForeignKey("persona.id"), nullable=False, comment="FK persona propietaria")
+    estado = Column(Integer, nullable=False, default=1, comment="1 activo, 0 inactivo")
     
     # Relaciones
     accidente = relationship("Accidente", back_populates="propietarios")

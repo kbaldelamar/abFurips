@@ -15,7 +15,8 @@ from PySide6.QtWidgets import (
     QScrollArea,
     QMessageBox,
 )
-from PySide6.QtCore import Signal, QDate, Qt
+from PySide6.QtCore import Signal, QDate, Qt, QRegularExpression
+from PySide6.QtGui import QRegularExpressionValidator
 
 
 class PropietarioForm(QWidget):
@@ -25,6 +26,7 @@ class PropietarioForm(QWidget):
     buscar_persona_signal = Signal(str, str)  # tipo_id, numero
     guardar_propietario_signal = Signal(dict)
     actualizar_propietario_signal = Signal(dict)
+    anular_propietario_signal = Signal(int)  # propietario_id
     
     def __init__(self):
         super().__init__()
@@ -98,6 +100,9 @@ class PropietarioForm(QWidget):
         self.txt_numero_id = QLineEdit()
         self.txt_numero_id.setMinimumWidth(130)
         self.txt_numero_id.setPlaceholderText("Documento")
+        # Validador: solo números
+        validator_numeros = QRegularExpressionValidator(QRegularExpression(r"^\d*$"))
+        self.txt_numero_id.setValidator(validator_numeros)
         grid.addWidget(self.txt_numero_id, 0, 3)
         
         self.btn_buscar = QPushButton("🔍 Buscar")
@@ -115,6 +120,9 @@ class PropietarioForm(QWidget):
         grid.addWidget(lbl, 1, 0)
         self.txt_primer_nombre = QLineEdit()
         self.txt_primer_nombre.setMinimumWidth(130)
+        # Validador: solo letras, espacios, tildes y ñ
+        validator_letras = QRegularExpressionValidator(QRegularExpression(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$"))
+        self.txt_primer_nombre.setValidator(validator_letras)
         grid.addWidget(self.txt_primer_nombre, 1, 1)
         
         lbl = QLabel("2do Nombre:")
@@ -122,6 +130,7 @@ class PropietarioForm(QWidget):
         grid.addWidget(lbl, 1, 2)
         self.txt_segundo_nombre = QLineEdit()
         self.txt_segundo_nombre.setMinimumWidth(130)
+        self.txt_segundo_nombre.setValidator(validator_letras)
         grid.addWidget(self.txt_segundo_nombre, 1, 3)
         
         lbl = QLabel("1er Apellido:")
@@ -129,6 +138,7 @@ class PropietarioForm(QWidget):
         grid.addWidget(lbl, 1, 4)
         self.txt_primer_apellido = QLineEdit()
         self.txt_primer_apellido.setMinimumWidth(130)
+        self.txt_primer_apellido.setValidator(validator_letras)
         grid.addWidget(self.txt_primer_apellido, 1, 5)
         
         lbl = QLabel("2do Apellido:")
@@ -136,6 +146,7 @@ class PropietarioForm(QWidget):
         grid.addWidget(lbl, 1, 6)
         self.txt_segundo_apellido = QLineEdit()
         self.txt_segundo_apellido.setMinimumWidth(130)
+        self.txt_segundo_apellido.setValidator(validator_letras)
         grid.addWidget(self.txt_segundo_apellido, 1, 7)
         
         # Fila 2: Fecha nacimiento y sexo
@@ -155,6 +166,32 @@ class PropietarioForm(QWidget):
         self.combo_sexo.setMinimumWidth(130)
         grid.addWidget(self.combo_sexo, 2, 3)
         
+        # Fila 3: Dirección, teléfono, municipio
+        lbl = QLabel("Dirección:")
+        lbl.setMaximumWidth(80)
+        grid.addWidget(lbl, 3, 0)
+        self.txt_direccion = QLineEdit()
+        self.txt_direccion.setMaxLength(200)
+        self.txt_direccion.setMinimumWidth(160)
+        grid.addWidget(self.txt_direccion, 3, 1, 1, 3)  # Span 3 columns
+        
+        lbl = QLabel("Teléfono:")
+        lbl.setMaximumWidth(80)
+        grid.addWidget(lbl, 3, 4)
+        self.txt_telefono = QLineEdit()
+        self.txt_telefono.setMaxLength(15)
+        self.txt_telefono.setMinimumWidth(130)
+        # Validador: solo números
+        self.txt_telefono.setValidator(validator_numeros)
+        grid.addWidget(self.txt_telefono, 3, 5)
+        
+        lbl = QLabel("Municipio:")
+        lbl.setMaximumWidth(80)
+        grid.addWidget(lbl, 3, 6)
+        self.combo_municipio_residencia = QComboBox()
+        self.combo_municipio_residencia.setMinimumWidth(160)
+        grid.addWidget(self.combo_municipio_residencia, 3, 7)
+        
         group.setLayout(grid)
         return group
     
@@ -173,6 +210,22 @@ class PropietarioForm(QWidget):
         self.btn_actualizar.clicked.connect(self._on_actualizar)
         self.btn_actualizar.setVisible(False)  # Oculto por defecto
         layout.addWidget(self.btn_actualizar)
+        
+        self.btn_anular = QPushButton("❌ Anular Propietario")
+        self.btn_anular.setMinimumWidth(150)
+        self.btn_anular.clicked.connect(self._on_anular)
+        self.btn_anular.setVisible(False)  # Oculto por defecto
+        self.btn_anular.setStyleSheet("""
+            QPushButton {
+                background-color: #DC3545;
+                color: white;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #C82333;
+            }
+        """)
+        layout.addWidget(self.btn_anular)
         
         self.btn_limpiar = QPushButton("🔄 Limpiar")
         self.btn_limpiar.setMinimumWidth(80)
@@ -215,6 +268,25 @@ class PropietarioForm(QWidget):
         datos = self.get_datos_propietario()
         self.actualizar_propietario_signal.emit(datos)
     
+    def _on_anular(self):
+        """Maneja el evento de anular propietario."""
+        if not self.propietario_id_actual:
+            return
+        
+        # Confirmar anulación
+        respuesta = QMessageBox.question(
+            self,
+            "Confirmar Anulación",
+            f"¿Está seguro de anular el propietario?\n\n"
+            f"El propietario no se eliminará, solo cambiará su estado a ANULADO.\n"
+            f"Esto permitirá registrar un nuevo propietario para este accidente.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if respuesta == QMessageBox.StandardButton.Yes:
+            self.anular_propietario_signal.emit(self.propietario_id_actual)
+    
     def get_datos_propietario(self) -> dict:
         """Obtiene los datos del formulario."""
         return {
@@ -229,6 +301,9 @@ class PropietarioForm(QWidget):
             "segundo_apellido": self.txt_segundo_apellido.text().strip() or None,
             "fecha_nacimiento": self.date_nacimiento.date().toPython(),
             "sexo_id": self.combo_sexo.currentData(),
+            "direccion": self.txt_direccion.text().strip() or "N/A",
+            "telefono": self.txt_telefono.text().strip() or "N/A",
+            "municipio_residencia_id": self.combo_municipio_residencia.currentData() or 1,
         }
     
     def cargar_persona(self, persona: dict):
@@ -238,6 +313,8 @@ class PropietarioForm(QWidget):
         self.txt_segundo_nombre.setText(persona.get("segundo_nombre", "") or "")
         self.txt_primer_apellido.setText(persona.get("primer_apellido", ""))
         self.txt_segundo_apellido.setText(persona.get("segundo_apellido", "") or "")
+        self.txt_direccion.setText(persona.get("direccion", ""))
+        self.txt_telefono.setText(persona.get("telefono", ""))
         
         if persona.get("fecha_nacimiento"):
             self.date_nacimiento.setDate(QDate(persona["fecha_nacimiento"]))
@@ -246,6 +323,11 @@ class PropietarioForm(QWidget):
             idx = self.combo_sexo.findData(persona["sexo_id"])
             if idx >= 0:
                 self.combo_sexo.setCurrentIndex(idx)
+        
+        if persona.get("municipio_residencia_id"):
+            idx = self.combo_municipio_residencia.findData(persona["municipio_residencia_id"])
+            if idx >= 0:
+                self.combo_municipio_residencia.setCurrentIndex(idx)
         
         nombre_completo = f"{persona.get('primer_nombre', '')} {persona.get('primer_apellido', '')}"
         self.lbl_persona_encontrada.setText(f"✓ Persona encontrada: {nombre_completo}")
@@ -260,17 +342,40 @@ class PropietarioForm(QWidget):
         self.txt_segundo_nombre.clear()
         self.txt_primer_apellido.clear()
         self.txt_segundo_apellido.clear()
+        self.txt_direccion.clear()
+        self.txt_telefono.clear()
         self.date_nacimiento.setDate(QDate.currentDate())
         self.combo_sexo.setCurrentIndex(0)
+        self.combo_municipio_residencia.setCurrentIndex(0)
         
         self.lbl_persona_encontrada.clear()
         self.lbl_estado.clear()
         self.lbl_estado.setVisible(False)
         self.btn_guardar.setEnabled(True)
         
+        # SEGURIDAD: Desbloquear búsqueda después de limpiar
+        self._desbloquear_busqueda_propietario()
+        
         # Restaurar botones
         self.btn_guardar.setVisible(True)
         self.btn_actualizar.setVisible(False)
+        self.btn_anular.setVisible(False)
+    
+    def _bloquear_busqueda_propietario(self):
+        """SEGURIDAD: Bloquea solo el botón de búsqueda cuando ya existe un propietario guardado."""
+        # Solo bloquear el botón, permitir editar tipo y número de documento manualmente
+        self.btn_buscar.setEnabled(False)
+        self.btn_buscar.setStyleSheet("background-color: #E0E0E0;")
+        self.lbl_persona_encontrada.setText("🔒 Búsqueda deshabilitada. Para buscar otro, debe anular este primero")
+        self.lbl_persona_encontrada.setStyleSheet("color: #FF6B6B; font-weight: bold; font-size: 9pt;")
+        print("🔒 PropietarioForm: Botón búsqueda bloqueado - puede editar documento manualmente")
+    
+    def _desbloquear_busqueda_propietario(self):
+        """SEGURIDAD: Desbloquea la búsqueda después de anular un propietario."""
+        self.btn_buscar.setEnabled(True)
+        self.btn_buscar.setStyleSheet("")
+        self.lbl_persona_encontrada.setText("")
+        print("🔓 PropietarioForm: Botón búsqueda desbloqueado - puede buscar nuevo propietario")
     
     def cargar_tipos_identificacion(self, tipos: list):
         """Carga tipos de identificación."""
@@ -283,6 +388,12 @@ class PropietarioForm(QWidget):
         self.combo_sexo.clear()
         for s in sexos:
             self.combo_sexo.addItem(s["descripcion"], s["id"])
+    
+    def cargar_municipios(self, municipios: list):
+        """Carga municipios."""
+        self.combo_municipio_residencia.clear()
+        for m in municipios:
+            self.combo_municipio_residencia.addItem(m["nombre"], m["id"])
     
     def mostrar_propietario_guardado(self, propietario_id: int, nombre: str):
         """Muestra el propietario guardado."""
@@ -299,7 +410,11 @@ class PropietarioForm(QWidget):
             }
         """)
         self.lbl_estado.setVisible(True)
-        self.btn_guardar.setEnabled(False)
+        
+        # Mostrar botón Actualizar y Anular, ocultar Guardar
+        self.btn_guardar.setVisible(False)
+        self.btn_actualizar.setVisible(True)
+        self.btn_anular.setVisible(True)
     
     def cargar_propietario_existente(self, propietario: dict):
         """Carga un propietario existente."""
@@ -315,6 +430,9 @@ class PropietarioForm(QWidget):
                 "segundo_apellido": persona.get("segundo_apellido"),
                 "fecha_nacimiento": persona.get("fecha_nacimiento"),
                 "sexo_id": persona.get("sexo_id"),
+                "direccion": persona.get("direccion"),
+                "telefono": persona.get("telefono"),
+                "municipio_residencia_id": persona.get("municipio_residencia_id"),
             })
             
             # Tipo ID
@@ -338,6 +456,10 @@ class PropietarioForm(QWidget):
             """)
             self.lbl_estado.setVisible(True)
             
-            # Mostrar botón Actualizar, ocultar Guardar
+            # SEGURIDAD: Bloquear búsqueda cuando ya existe propietario guardado
+            self._bloquear_busqueda_propietario()
+            
+            # Mostrar botón Actualizar y Anular, ocultar Guardar
             self.btn_guardar.setVisible(False)
             self.btn_actualizar.setVisible(True)
+            self.btn_anular.setVisible(True)

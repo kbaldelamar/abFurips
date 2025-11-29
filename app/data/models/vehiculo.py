@@ -23,6 +23,7 @@ class Vehiculo(Base):
     vigencia_fin = Column(Date, nullable=True, comment="Fin vigencia póliza")
     estado_aseguramiento_id = Column(Integer, ForeignKey("estado_aseguramiento.id"), nullable=False, comment="FK estado de aseguramiento")
     propietario_id = Column(BigInteger, ForeignKey("persona.id"), nullable=True, comment="FK propietario (persona)")
+    estado = Column(Integer, nullable=False, default=1, comment="1 activo, 0 inactivo")
     
     # Relaciones
     tipo_vehiculo = relationship("TipoVehiculo", back_populates="vehiculos")

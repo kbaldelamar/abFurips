@@ -20,6 +20,7 @@ class AccidenteDetalle(Base):
     valor_unitario = Column(BigInteger, nullable=False, default=0, comment="Valor unitario facturado")
     valor_facturado = Column(BigInteger, nullable=False, default=0, comment="Valor total facturado")
     valor_reclamado = Column(BigInteger, nullable=False, default=0, comment="Valor total reclamado")
+    estado = Column(Integer, nullable=False, default=1, comment="1 activo, 0 inactivo")
     
     # Relaciones
     accidente = relationship("Accidente", back_populates="detalles")
