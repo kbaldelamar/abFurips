@@ -24,6 +24,11 @@ from app.data.models.accidente import (
 )
 from app.data.models.accidente_detalle import AccidenteDetalle
 from app.data.models.accidente_totales import AccidenteTotales
+from app.data.models.persona_config import PersonaConfig
+from app.data.models.accidente_procesos import (
+    AccidenteMedicoTratante,
+    AccidenteRemision,
+)
 
 __all__ = [
     "Base",
@@ -49,4 +54,7 @@ __all__ = [
     "AccidentePropietario",
     "AccidenteDetalle",
     "AccidenteTotales",
+    "PersonaConfig",
+    "AccidenteMedicoTratante",
+    "AccidenteRemision",
 ]

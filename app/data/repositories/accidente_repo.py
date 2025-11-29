@@ -54,12 +54,17 @@ class AccidenteRepository:
         consecutivo: Optional[str] = None,
         factura: Optional[str] = None,
         limit: int = 50,
+        solo_activos: bool = True,
     ) -> List[Accidente]:
         """Busca accidentes por múltiples criterios."""
         query = self.session.query(Accidente).options(
             joinedload(Accidente.prestador),
             joinedload(Accidente.naturaleza_evento),
         )
+        
+        # Por defecto solo mostrar activos
+        if solo_activos:
+            query = query.filter(Accidente.estado == 1)
         
         if prestador_id:
             query = query.filter(Accidente.prestador_id == prestador_id)
@@ -93,13 +98,46 @@ class AccidenteRepository:
         return accidente
     
     def delete(self, accidente_id: int) -> bool:
-        """Elimina un accidente por ID."""
+        """Elimina un accidente por ID (eliminación física)."""
         accidente = self.get_by_id(accidente_id)
         if accidente:
             self.session.delete(accidente)
             self.session.flush()
             return True
         return False
+    
+    def anular(self, accidente_id: int) -> bool:
+        """Anula un accidente (soft delete - cambia estado a 0)."""
+        accidente = self.get_by_id(accidente_id)
+        if accidente:
+            accidente.estado = 0
+            self.session.flush()
+            return True
+        return False
+    
+    def reactivar(self, accidente_id: int) -> bool:
+        """Reactiva un accidente anulado (cambia estado a 1)."""
+        accidente = self.get_by_id(accidente_id)
+        if accidente:
+            accidente.estado = 1
+            self.session.flush()
+            return True
+        return False
+    
+    def get_activos(self, limit: int = 100) -> List[Accidente]:
+        """Obtiene solo accidentes activos (estado=1)."""
+        return (
+            self.session.query(Accidente)
+            .options(
+                joinedload(Accidente.prestador),
+                joinedload(Accidente.naturaleza_evento),
+                joinedload(Accidente.municipio_evento),
+            )
+            .filter(Accidente.estado == 1)
+            .order_by(Accidente.fecha_evento.desc())
+            .limit(limit)
+            .all()
+        )
     
     def existe_consecutivo(self, prestador_id: int, consecutivo: str, excluir_id: Optional[int] = None) -> bool:
         """Verifica si existe un consecutivo para un prestador (útil para validación)."""

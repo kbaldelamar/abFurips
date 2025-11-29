@@ -22,14 +22,31 @@ class AccidentePresenter(QObject):
         from app.ui.presenters.victima_presenter import VictimaPresenter
         from app.ui.presenters.conductor_presenter import ConductorPresenter
         from app.ui.presenters.propietario_presenter import PropietarioPresenter
+        from app.ui.presenters.vehiculo_presenter import VehiculoPresenter
+        from app.ui.presenters.medico_tratante_presenter import MedicoTratantePresenter
+        from app.ui.presenters.remision_presenter import RemisionPresenter
+        from app.ui.presenters.detalle_presenter import DetallePresenter
         
         self.victima_presenter = VictimaPresenter(self.view.victima_form)
         self.conductor_presenter = ConductorPresenter(self.view.conductor_form)
         self.propietario_presenter = PropietarioPresenter(self.view.propietario_form)
+        self.vehiculo_presenter = VehiculoPresenter(self.view.vehiculo_form)
+        self.medico_tratante_presenter = MedicoTratantePresenter(self.view.medico_tratante_form)
+        self.remision_presenter = RemisionPresenter(self.view.remision_form)
+        self.detalle_presenter = DetallePresenter(self.view.detalle_form)
         
         # Establecer referencias cruzadas para copiar datos entre tabs
         self.victima_presenter.conductor_presenter = self.conductor_presenter
         self.victima_presenter.propietario_presenter = self.propietario_presenter
+        
+        # Conectar víctima con médico tratante
+        self.view.victima_form.guardar_victima_signal.connect(self._on_victima_guardada)
+        self.view.victima_form.actualizar_victima_signal.connect(self._on_victima_actualizada)
+        
+        # Conectar callbacks entre Vehículo y Propietario
+        self.vehiculo_presenter.set_propietario_cargado_callback(self._cargar_propietario_desde_vehiculo)
+        self.propietario_presenter.set_vehiculos_cargados_callback(self._cargar_vehiculos_desde_propietario)
+        self.propietario_presenter.set_propietario_guardado_callback(self._notificar_vehiculo_propietario_guardado)
         
         # Conectar señales
         self._connect_signals()
@@ -41,6 +58,7 @@ class AccidentePresenter(QObject):
         """Conecta las señales de la vista."""
         self.view.guardar_accidente_signal.connect(self.guardar_accidente)
         self.view.actualizar_accidente_signal.connect(self.actualizar_accidente)
+        self.view.anular_accidente_signal.connect(self.anular_accidente)
         self.view.buscar_accidente_signal.connect(self.abrir_buscar_accidente)
     
     def _cargar_catalogos(self):
@@ -137,6 +155,9 @@ class AccidentePresenter(QObject):
                     self.victima_presenter.set_accidente_id(accidente.id)
                     self.conductor_presenter.set_accidente_id(accidente.id)
                     self.propietario_presenter.set_accidente_id(accidente.id)
+                    self.vehiculo_presenter.set_accidente_id(accidente.id)
+                    self.remision_presenter.set_accidente_id(accidente.id)
+                    self.detalle_presenter.set_accidente_id(accidente.id)
                     
                     # Mostrar mensaje de éxito
                     self._mostrar_exito(
@@ -226,6 +247,35 @@ class AccidentePresenter(QObject):
             traceback.print_exc()
             self._mostrar_error(f"Error al actualizar accidente: {str(e)}")
     
+    def anular_accidente(self, accidente_id: int):
+        """Anula un accidente (soft delete - cambia estado a 0)."""
+        try:
+            print(f"🗑️ Anulando accidente ID: {accidente_id}")
+            
+            with get_db_session() as session:
+                from app.data.repositories.accidente_repo import AccidenteRepository
+                repo = AccidenteRepository(session)
+                
+                # Anular el accidente
+                if repo.anular(accidente_id):
+                    session.commit()
+                    
+                    self._mostrar_exito(f"✅ Accidente anulado exitosamente\n\nID: {accidente_id}\n\n"
+                                      "El accidente no se eliminó, solo cambió a estado ANULADO.")
+                    
+                    print(f"✓ Accidente {accidente_id} anulado")
+                    
+                    # Limpiar el formulario
+                    self.view._on_nuevo()
+                else:
+                    self._mostrar_error(f"No se pudo anular el accidente ID {accidente_id}")
+        
+        except Exception as e:
+            print(f"❌ Error anulando accidente: {e}")
+            import traceback
+            traceback.print_exc()
+            self._mostrar_error(f"Error al anular accidente: {str(e)}")
+    
     def abrir_buscar_accidente(self):
         """Abre el diálogo de búsqueda de accidentes."""
         from app.ui.views.buscar_accidente_dialog import BuscarAccidenteDialog
@@ -279,6 +329,9 @@ class AccidentePresenter(QObject):
                 self.victima_presenter.set_accidente_id(accidente.id)
                 self.conductor_presenter.set_accidente_id(accidente.id)
                 self.propietario_presenter.set_accidente_id(accidente.id)
+                self.vehiculo_presenter.set_accidente_id(accidente.id)
+                self.remision_presenter.set_accidente_id(accidente.id)
+                self.detalle_presenter.set_accidente_id(accidente.id)
                 
                 print(f"✓ Accidente {accidente.id} cargado exitosamente")
         
@@ -287,3 +340,59 @@ class AccidentePresenter(QObject):
             import traceback
             traceback.print_exc()
             self._mostrar_error(f"Error al cargar accidente: {str(e)}")
+    
+    def _cargar_propietario_desde_vehiculo(self, propietario_id: int):
+        """Callback: Carga el propietario en su tab cuando se busca un vehículo."""
+        try:
+            from app.data.repositories.persona_repo import PersonaRepository
+            
+            with get_db_session() as session:
+                persona_repo = PersonaRepository(session)
+                persona = persona_repo.get_by_id(propietario_id)
+                
+                if persona:
+                    # Cargar en el tab de propietario
+                    self.propietario_presenter.cargar_propietario_existente_desde_persona(persona)
+                    
+                    # Cambiar al tab de propietario para que el usuario vea los datos
+                    self.view.tabs.setCurrentWidget(self.view.tab_propietario)
+                    
+                    print(f"✓ Propietario cargado desde vehículo: {persona.primer_nombre} {persona.primer_apellido}")
+        
+        except Exception as e:
+            print(f"❌ Error cargando propietario desde vehículo: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def _cargar_vehiculos_desde_propietario(self, propietario_id: int):
+        """Callback: Carga vehículos cuando se selecciona un propietario."""
+        try:
+            # Cargar vehículos del propietario (mostrará modal si tiene varios)
+            self.vehiculo_presenter.cargar_vehiculos_por_propietario(propietario_id)
+        
+        except Exception as e:
+            print(f"❌ Error cargando vehículos desde propietario: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def _notificar_vehiculo_propietario_guardado(self):
+        """Callback: Notifica al vehículo que se guardó un propietario."""
+        self.vehiculo_presenter.notificar_propietario_guardado()
+    
+    def _on_victima_guardada(self, datos: dict):
+        """Callback: Notifica al médico tratante cuando se guarda una víctima."""
+        try:
+            if self.accidente_id and datos.get("victima_id"):
+                victima_id = datos["victima_id"]
+                nombre = f"{datos.get('primer_nombre', '')} {datos.get('primer_apellido', '')}".strip()
+                self.medico_tratante_presenter.set_accidente_victima(
+                    self.accidente_id,
+                    victima_id,
+                    nombre
+                )
+        except Exception as e:
+            print(f"❌ Error notificando médico tratante: {e}")
+    
+    def _on_victima_actualizada(self, datos: dict):
+        """Callback: Notifica al médico tratante cuando se actualiza una víctima."""
+        self._on_victima_guardada(datos)

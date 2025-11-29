@@ -26,6 +26,7 @@ class Persona(Base):
     telefono = Column(String(15), nullable=False, comment="Teléfono de contacto")
     municipio_residencia_id = Column(Integer, ForeignKey("municipio.id"), nullable=False, comment="FK municipio de residencia")
     fecha_registro = Column(DateTime, nullable=False, default=datetime.now, comment="Fecha de creación del registro")
+    estado = Column(Integer, nullable=False, default=1, comment="1 activo, 0 inactivo")
     
     # Constraints
     __table_args__ = (
@@ -45,6 +46,9 @@ class Persona(Base):
     como_conductor = relationship("AccidenteConductor", back_populates="persona")
     como_propietario = relationship("AccidentePropietario", back_populates="persona")
     vehiculos_propietario = relationship("Vehiculo", back_populates="propietario")
+    
+    # Configuración adicional
+    config = relationship("PersonaConfig", back_populates="persona", uselist=False)
     
     @property
     def nombre_completo(self) -> str:

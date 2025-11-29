@@ -35,6 +35,7 @@ class VictimaPresenter:
         self.view.buscar_persona_signal.connect(self.buscar_persona)
         self.view.guardar_victima_signal.connect(self.guardar_victima)
         self.view.actualizar_victima_signal.connect(self.actualizar_victima)
+        self.view.anular_victima_signal.connect(self.anular_victima)
     
     def _cargar_catalogos(self):
         """Carga los catálogos necesarios."""
@@ -87,6 +88,9 @@ class VictimaPresenter:
                         "segundo_apellido": persona.segundo_apellido,
                         "fecha_nacimiento": persona.fecha_nacimiento,
                         "sexo_id": persona.sexo_id,
+                        "direccion": persona.direccion,
+                        "telefono": persona.telefono,
+                        "municipio_residencia_id": persona.municipio_residencia_id,
                     })
                 else:
                     self.view.lbl_persona_encontrada.setText("⚠️ Persona no encontrada. Se creará nueva.")
@@ -152,9 +156,9 @@ class VictimaPresenter:
                     "segundo_apellido": datos["segundo_apellido"],
                     "fecha_nacimiento": datos["fecha_nacimiento"],
                     "sexo_id": datos["sexo_id"],
-                    "direccion": "N/A",  # Campo obligatorio en BD
-                    "telefono": "N/A",  # Campo obligatorio en BD
-                    "municipio_residencia_id": None,
+                    "direccion": datos.get("direccion") or "N/A",
+                    "telefono": datos.get("telefono") or "N/A",
+                    "municipio_residencia_id": datos.get("municipio_residencia_id") or 1,
                 }
                 
                 persona = persona_repo.obtener_o_crear(
@@ -171,34 +175,13 @@ class VictimaPresenter:
                     if victima:
                         victima.persona_id = persona.id
                         victima.condicion_codigo = datos["condicion"]
-                        victima.diagnostico_ingreso = datos["diagnostico_principal"]
-                        victima.diagnostico_ingreso_sec1 = datos["diagnostico_relacionado_1"]
-                        victima.diagnostico_ingreso_sec2 = datos["diagnostico_relacionado_2"]
-                        # diagnostico_relacionado_3 no tiene campo en BD
-                        victima.servicio_uci = 1 if datos["ingreso_uci"] else 0
-                        # Calcular días en UCI si hay fechas
-                        if datos["fecha_ingreso_uci"] and datos["fecha_egreso_uci"]:
-                            dias = (datos["fecha_egreso_uci"] - datos["fecha_ingreso_uci"]).days
-                            victima.dias_uci = dias if dias >= 0 else 0
-                        else:
-                            victima.dias_uci = None
                         session.flush()
                 else:
                     # Crear nueva
-                    dias_uci = None
-                    if datos["fecha_ingreso_uci"] and datos["fecha_egreso_uci"]:
-                        dias = (datos["fecha_egreso_uci"] - datos["fecha_ingreso_uci"]).days
-                        dias_uci = dias if dias >= 0 else 0
-                    
                     victima = AccidenteVictima(
                         accidente_id=self.accidente_id,
                         persona_id=persona.id,
                         condicion_codigo=datos["condicion"],
-                        diagnostico_ingreso=datos["diagnostico_principal"],
-                        diagnostico_ingreso_sec1=datos["diagnostico_relacionado_1"],
-                        diagnostico_ingreso_sec2=datos["diagnostico_relacionado_2"],
-                        servicio_uci=1 if datos["ingreso_uci"] else 0,
-                        dias_uci=dias_uci,
                     )
                     victima = victima_repo.create(victima)
                     session.flush()
@@ -289,13 +272,9 @@ class VictimaPresenter:
             print("❌ Error: Debe seleccionar el sexo")
             return
         
-        # Validaciones de víctima - condicion y diagnostico principal obligatorios
+        # Validaciones de víctima - solo condicion obligatoria
         if not datos.get("condicion"):
             print("❌ Error: Debe seleccionar la condición de la víctima")
-            return
-        
-        if not datos.get("diagnostico_principal"):
-            print("❌ Error: Debe ingresar el diagnóstico principal")
             return
         
         try:
@@ -313,9 +292,9 @@ class VictimaPresenter:
                     "segundo_apellido": datos["segundo_apellido"],
                     "fecha_nacimiento": datos["fecha_nacimiento"],
                     "sexo_id": datos["sexo_id"],
-                    "direccion": "N/A",  # Campo obligatorio en BD
-                    "telefono": "N/A",  # Campo obligatorio en BD
-                    "municipio_residencia_id": None,
+                    "direccion": datos.get("direccion") or "N/A",
+                    "telefono": datos.get("telefono") or "N/A",
+                    "municipio_residencia_id": datos.get("municipio_residencia_id") or 1,
                 }
                 
                 persona = persona_repo.obtener_o_crear(
@@ -333,17 +312,6 @@ class VictimaPresenter:
                 
                 victima.persona_id = persona.id
                 victima.condicion_codigo = datos["condicion"]
-                victima.diagnostico_ingreso = datos["diagnostico_principal"]
-                victima.diagnostico_ingreso_sec1 = datos["diagnostico_relacionado_1"]
-                victima.diagnostico_ingreso_sec2 = datos["diagnostico_relacionado_2"]
-                victima.servicio_uci = 1 if datos["ingreso_uci"] else 0
-                
-                # Calcular días en UCI si hay fechas
-                if datos["fecha_ingreso_uci"] and datos["fecha_egreso_uci"]:
-                    dias = (datos["fecha_egreso_uci"] - datos["fecha_ingreso_uci"]).days
-                    victima.dias_uci = dias if dias >= 0 else 0
-                else:
-                    victima.dias_uci = None
                 
                 session.flush()
                 session.commit()
@@ -357,6 +325,40 @@ class VictimaPresenter:
             print(f"❌ Error actualizando víctima: {e}")
             import traceback
             traceback.print_exc()
+    
+    def anular_victima(self, victima_id: int):
+        """Anula una víctima (soft delete - cambia estado a 0)."""
+        try:
+            with get_db_session() as session:
+                victima_repo = VictimaRepository(session)
+                
+                if victima_repo.anular(victima_id):
+                    session.commit()
+                    print(f"✓ Víctima {victima_id} anulada correctamente")
+                    
+                    from PySide6.QtWidgets import QMessageBox
+                    QMessageBox.information(
+                        self.view,
+                        "Anulación Exitosa",
+                        "La víctima ha sido anulada correctamente.\n"
+                        "Puede registrar una nueva víctima para este accidente."
+                    )
+                    
+                    # Limpiar formulario para permitir nuevo registro
+                    self.view.limpiar_formulario()
+                else:
+                    print(f"❌ No se pudo anular la víctima ID {victima_id}")
+        
+        except Exception as e:
+            print(f"❌ Error anulando víctima: {e}")
+            import traceback
+            traceback.print_exc()
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.critical(
+                self.view,
+                "Error",
+                f"Error al anular víctima: {str(e)}"
+            )
     
     def cargar_victima_existente(self):
         """Carga la víctima existente si hay una."""
@@ -372,16 +374,9 @@ class VictimaPresenter:
                     victima = victimas[0]  # Solo debe haber una
                     persona = victima.persona
                     
-                    self.view.cargar_victima_existente({
+                    datos_victima = {
                         "id": victima.id,
                         "condicion": victima.condicion_codigo,
-                        "diagnostico_principal": victima.diagnostico_ingreso,
-                        "diagnostico_relacionado_1": victima.diagnostico_ingreso_sec1,
-                        "diagnostico_relacionado_2": victima.diagnostico_ingreso_sec2,
-                        "diagnostico_relacionado_3": None,  # No existe en BD
-                        "ingreso_uci": victima.servicio_uci == 1 if victima.servicio_uci is not None else False,
-                        "fecha_ingreso_uci": None,  # No se almacena en BD, solo dias_uci
-                        "fecha_egreso_uci": None,  # No se almacena en BD, solo dias_uci
                         "persona": {
                             "id": persona.id,
                             "tipo_identificacion_id": persona.tipo_identificacion_id,
@@ -392,8 +387,20 @@ class VictimaPresenter:
                             "segundo_apellido": persona.segundo_apellido,
                             "fecha_nacimiento": persona.fecha_nacimiento,
                             "sexo_id": persona.sexo_id,
+                            "direccion": persona.direccion,
+                            "telefono": persona.telefono,
+                            "municipio_residencia_id": persona.municipio_residencia_id,
                         }
-                    })
+                    }
+                    self.view.cargar_victima_existente(datos_victima)
+                    
+                    # Emitir señal para otros presenters (médico tratante)
+                    datos_notificacion = {
+                        "victima_id": victima.id,
+                        "primer_nombre": persona.primer_nombre,
+                        "primer_apellido": persona.primer_apellido,
+                    }
+                    self.view.actualizar_victima_signal.emit(datos_notificacion)
                     
         except Exception as e:
             print(f"❌ Error cargando víctima: {e}")

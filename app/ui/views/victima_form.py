@@ -15,7 +15,8 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QScrollArea,
 )
-from PySide6.QtCore import Signal, QDate, Qt
+from PySide6.QtCore import Signal, QDate, Qt, QRegularExpression
+from PySide6.QtGui import QRegularExpressionValidator
 
 
 class VictimaForm(QWidget):
@@ -25,6 +26,7 @@ class VictimaForm(QWidget):
     buscar_persona_signal = Signal(str, str)  # tipo_id, numero
     guardar_victima_signal = Signal(dict)
     actualizar_victima_signal = Signal(dict)
+    anular_victima_signal = Signal(int)  # victima_id
     
     def __init__(self):
         super().__init__()
@@ -107,6 +109,9 @@ class VictimaForm(QWidget):
         self.txt_numero_id = QLineEdit()
         self.txt_numero_id.setMinimumWidth(130)
         self.txt_numero_id.setPlaceholderText("Documento")
+        # Validador: solo números
+        validator_numeros = QRegularExpressionValidator(QRegularExpression(r"^\d*$"))
+        self.txt_numero_id.setValidator(validator_numeros)
         grid.addWidget(self.txt_numero_id, 0, 3)
         
         self.btn_buscar = QPushButton("🔍 Buscar")
@@ -124,6 +129,9 @@ class VictimaForm(QWidget):
         grid.addWidget(lbl, 1, 0)
         self.txt_primer_nombre = QLineEdit()
         self.txt_primer_nombre.setMinimumWidth(130)
+        # Validador: solo letras, espacios, tildes y ñ
+        validator_letras = QRegularExpressionValidator(QRegularExpression(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$"))
+        self.txt_primer_nombre.setValidator(validator_letras)
         grid.addWidget(self.txt_primer_nombre, 1, 1)
         
         lbl = QLabel("2do Nombre:")
@@ -131,6 +139,7 @@ class VictimaForm(QWidget):
         grid.addWidget(lbl, 1, 2)
         self.txt_segundo_nombre = QLineEdit()
         self.txt_segundo_nombre.setMinimumWidth(130)
+        self.txt_segundo_nombre.setValidator(validator_letras)
         grid.addWidget(self.txt_segundo_nombre, 1, 3)
         
         lbl = QLabel("1er Apellido:")
@@ -138,6 +147,7 @@ class VictimaForm(QWidget):
         grid.addWidget(lbl, 1, 4)
         self.txt_primer_apellido = QLineEdit()
         self.txt_primer_apellido.setMinimumWidth(130)
+        self.txt_primer_apellido.setValidator(validator_letras)
         grid.addWidget(self.txt_primer_apellido, 1, 5)
         
         lbl = QLabel("2do Apellido:")
@@ -145,6 +155,7 @@ class VictimaForm(QWidget):
         grid.addWidget(lbl, 1, 6)
         self.txt_segundo_apellido = QLineEdit()
         self.txt_segundo_apellido.setMinimumWidth(130)
+        self.txt_segundo_apellido.setValidator(validator_letras)
         grid.addWidget(self.txt_segundo_apellido, 1, 7)
         
         # Fila 2: Fecha nacimiento y sexo
@@ -180,6 +191,8 @@ class VictimaForm(QWidget):
         self.txt_telefono_persona.setMinimumWidth(130)
         self.txt_telefono_persona.setPlaceholderText("Teléfono de contacto")
         self.txt_telefono_persona.setMaxLength(15)
+        # Validador: solo números
+        self.txt_telefono_persona.setValidator(validator_numeros)
         grid.addWidget(self.txt_telefono_persona, 3, 5)
         
         lbl = QLabel("Municipio:")
@@ -199,7 +212,7 @@ class VictimaForm(QWidget):
         grid.setSpacing(8)
         grid.setContentsMargins(8, 10, 8, 8)
         
-        # Fila 0: Condición y Diagnósticos
+        # Solo Condición
         lbl = QLabel("Condición:")
         lbl.setMaximumWidth(70)
         grid.addWidget(lbl, 0, 0)
@@ -207,67 +220,6 @@ class VictimaForm(QWidget):
         self.combo_condicion.addItems(["", "1 - Conductor", "2 - Peatón", "3 - Ocupante", "4 - Ciclista"])
         self.combo_condicion.setMinimumWidth(160)
         grid.addWidget(self.combo_condicion, 0, 1)
-        
-        lbl = QLabel("Diag. Principal:")
-        lbl.setMaximumWidth(90)
-        grid.addWidget(lbl, 0, 2)
-        self.txt_diag_principal = QLineEdit()
-        self.txt_diag_principal.setMaxLength(4)
-        self.txt_diag_principal.setFixedWidth(70)
-        self.txt_diag_principal.setPlaceholderText("S000")
-        grid.addWidget(self.txt_diag_principal, 0, 3)
-        
-        lbl = QLabel("Rel. 1:")
-        lbl.setMaximumWidth(50)
-        grid.addWidget(lbl, 0, 4)
-        self.txt_diag_relac1 = QLineEdit()
-        self.txt_diag_relac1.setMaxLength(4)
-        self.txt_diag_relac1.setFixedWidth(70)
-        grid.addWidget(self.txt_diag_relac1, 0, 5)
-        
-        lbl = QLabel("Rel. 2:")
-        lbl.setMaximumWidth(50)
-        grid.addWidget(lbl, 0, 6)
-        self.txt_diag_relac2 = QLineEdit()
-        self.txt_diag_relac2.setMaxLength(4)
-        self.txt_diag_relac2.setFixedWidth(70)
-        grid.addWidget(self.txt_diag_relac2, 0, 7)
-        
-        lbl = QLabel("Rel. 3:")
-        lbl.setMaximumWidth(50)
-        grid.addWidget(lbl, 0, 8)
-        self.txt_diag_relac3 = QLineEdit()
-        self.txt_diag_relac3.setMaxLength(4)
-        self.txt_diag_relac3.setFixedWidth(70)
-        grid.addWidget(self.txt_diag_relac3, 0, 9)
-        
-        # Fila 1: UCI
-        self.chk_uci = QCheckBox("Ingresó a UCI")
-        grid.addWidget(self.chk_uci, 1, 0, 1, 2)
-        
-        lbl = QLabel("F. Ingreso:")
-        lbl.setMaximumWidth(70)
-        grid.addWidget(lbl, 1, 2)
-        self.date_ingreso_uci = QDateEdit()
-        self.date_ingreso_uci.setCalendarPopup(True)
-        self.date_ingreso_uci.setDisplayFormat("dd/MM/yyyy")
-        self.date_ingreso_uci.setMinimumWidth(120)
-        self.date_ingreso_uci.setEnabled(False)
-        grid.addWidget(self.date_ingreso_uci, 1, 3)
-        
-        lbl = QLabel("F. Egreso:")
-        lbl.setMaximumWidth(70)
-        grid.addWidget(lbl, 1, 4)
-        self.date_egreso_uci = QDateEdit()
-        self.date_egreso_uci.setCalendarPopup(True)
-        self.date_egreso_uci.setDisplayFormat("dd/MM/yyyy")
-        self.date_egreso_uci.setMinimumWidth(120)
-        self.date_egreso_uci.setEnabled(False)
-        grid.addWidget(self.date_egreso_uci, 1, 5)
-        
-        # Conectar checkbox UCI
-        self.chk_uci.toggled.connect(lambda checked: self.date_ingreso_uci.setEnabled(checked))
-        self.chk_uci.toggled.connect(lambda checked: self.date_egreso_uci.setEnabled(checked))
         
         group.setLayout(grid)
         return group
@@ -307,6 +259,22 @@ class VictimaForm(QWidget):
         self.btn_actualizar.clicked.connect(self._on_actualizar)
         self.btn_actualizar.setVisible(False)  # Oculto por defecto
         layout.addWidget(self.btn_actualizar)
+        
+        self.btn_anular = QPushButton("❌ Anular Víctima")
+        self.btn_anular.setMinimumWidth(150)
+        self.btn_anular.clicked.connect(self._on_anular)
+        self.btn_anular.setVisible(False)  # Oculto por defecto
+        self.btn_anular.setStyleSheet("""
+            QPushButton {
+                background-color: #DC3545;
+                color: white;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #C82333;
+            }
+        """)
+        layout.addWidget(self.btn_anular)
         
         self.btn_limpiar = QPushButton("🔄 Limpiar")
         self.btn_limpiar.setMinimumWidth(80)
@@ -349,6 +317,27 @@ class VictimaForm(QWidget):
         datos = self.get_datos_victima()
         self.actualizar_victima_signal.emit(datos)
     
+    def _on_anular(self):
+        """Maneja el evento de anular víctima."""
+        from PySide6.QtWidgets import QMessageBox
+        
+        if not self.victima_id_actual:
+            return
+        
+        # Confirmar anulación
+        respuesta = QMessageBox.question(
+            self,
+            "Confirmar Anulación",
+            f"¿Está seguro de anular la víctima?\n\n"
+            f"La víctima no se eliminará, solo cambiará su estado a ANULADO.\n"
+            f"Esto permitirá registrar una nueva víctima para este accidente.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if respuesta == QMessageBox.StandardButton.Yes:
+            self.anular_victima_signal.emit(self.victima_id_actual)
+    
     def get_datos_victima(self) -> dict:
         """Obtiene los datos del formulario."""
         condicion_text = self.combo_condicion.currentText()
@@ -369,15 +358,8 @@ class VictimaForm(QWidget):
             "direccion": self.txt_direccion_persona.text().strip() or None,
             "telefono": self.txt_telefono_persona.text().strip() or None,
             "municipio_residencia_id": self.combo_municipio_residencia.currentData(),
-            # Datos víctima
+            # Datos víctima (solo condicion)
             "condicion": condicion,
-            "diagnostico_principal": self.txt_diag_principal.text().strip() or None,
-            "diagnostico_relacionado_1": self.txt_diag_relac1.text().strip() or None,
-            "diagnostico_relacionado_2": self.txt_diag_relac2.text().strip() or None,
-            "diagnostico_relacionado_3": self.txt_diag_relac3.text().strip() or None,
-            "ingreso_uci": self.chk_uci.isChecked(),
-            "fecha_ingreso_uci": self.date_ingreso_uci.date().toPython() if self.chk_uci.isChecked() else None,
-            "fecha_egreso_uci": self.date_egreso_uci.date().toPython() if self.chk_uci.isChecked() else None,
             # Copiar a otros roles
             "es_conductor": self.chk_es_conductor.isChecked(),
             "es_propietario": self.chk_es_propietario.isChecked(),
@@ -410,6 +392,22 @@ class VictimaForm(QWidget):
         nombre_completo = f"{persona.get('primer_nombre', '')} {persona.get('primer_apellido', '')}"
         self.lbl_persona_encontrada.setText(f"✓ Persona encontrada: {nombre_completo}")
     
+    def _bloquear_busqueda_victima(self):
+        """SEGURIDAD: Bloquea solo el botón de búsqueda cuando ya existe una víctima guardada."""
+        # Solo bloquear el botón, permitir editar tipo y número de documento manualmente
+        self.btn_buscar.setEnabled(False)
+        self.btn_buscar.setStyleSheet("background-color: #E0E0E0;")
+        self.lbl_persona_encontrada.setText("🔒 Búsqueda deshabilitada. Para buscar otro, debe anular este primero")
+        self.lbl_persona_encontrada.setStyleSheet("color: #FF6B6B; font-weight: bold; font-size: 9pt;")
+        print("🔒 VictimaForm: Botón búsqueda bloqueado - puede editar documento manualmente")
+    
+    def _desbloquear_busqueda_victima(self):
+        """SEGURIDAD: Desbloquea la búsqueda después de anular una víctima."""
+        self.btn_buscar.setEnabled(True)
+        self.btn_buscar.setStyleSheet("")
+        self.lbl_persona_encontrada.setText("")
+        print("🔓 VictimaForm: Botón búsqueda desbloqueado - puede buscar nueva víctima")
+    
     def limpiar_formulario(self):
         """Limpia todos los campos del formulario."""
         self.victima_id_actual = None
@@ -427,22 +425,19 @@ class VictimaForm(QWidget):
         self.combo_municipio_residencia.setCurrentIndex(0)
         
         self.combo_condicion.setCurrentIndex(0)
-        self.txt_diag_principal.clear()
-        self.txt_diag_relac1.clear()
-        self.txt_diag_relac2.clear()
-        self.txt_diag_relac3.clear()
-        self.chk_uci.setChecked(False)
-        self.date_ingreso_uci.setDate(QDate.currentDate())
-        self.date_egreso_uci.setDate(QDate.currentDate())
         
         self.lbl_persona_encontrada.clear()
         self.lbl_estado.clear()
         self.lbl_estado.setVisible(False)
         self.btn_guardar.setEnabled(True)
         
+        # SEGURIDAD: Desbloquear búsqueda después de limpiar
+        self._desbloquear_busqueda_victima()
+        
         # Restaurar botones
         self.btn_guardar.setVisible(True)
         self.btn_actualizar.setVisible(False)
+        self.btn_anular.setVisible(False)
         
         # Limpiar checkboxes de copiar
         self.chk_es_conductor.setChecked(False)
@@ -481,7 +476,11 @@ class VictimaForm(QWidget):
             }
         """)
         self.lbl_estado.setVisible(True)
-        self.btn_guardar.setEnabled(False)
+        
+        # Mostrar botón Actualizar y Anular, ocultar Guardar
+        self.btn_guardar.setVisible(False)
+        self.btn_actualizar.setVisible(True)
+        self.btn_anular.setVisible(True)
     
     def cargar_victima_existente(self, victima: dict):
         """Carga una víctima existente."""
@@ -497,6 +496,9 @@ class VictimaForm(QWidget):
                 "segundo_apellido": persona.get("segundo_apellido"),
                 "fecha_nacimiento": persona.get("fecha_nacimiento"),
                 "sexo_id": persona.get("sexo_id"),
+                "direccion": persona.get("direccion"),
+                "telefono": persona.get("telefono"),
+                "municipio_residencia_id": persona.get("municipio_residencia_id"),
             })
             
             # Tipo ID
@@ -506,23 +508,12 @@ class VictimaForm(QWidget):
             
             self.txt_numero_id.setText(persona.get("numero_identificacion", ""))
             
-            # Datos víctima
+            # Datos víctima (solo condicion)
             condicion = victima.get("condicion")
             if condicion:
                 condicion_map = {"1": 1, "2": 2, "3": 3, "4": 4}
                 idx = condicion_map.get(condicion, 0)
                 self.combo_condicion.setCurrentIndex(idx)
-            
-            self.txt_diag_principal.setText(victima.get("diagnostico_principal", "") or "")
-            self.txt_diag_relac1.setText(victima.get("diagnostico_relacionado_1", "") or "")
-            self.txt_diag_relac2.setText(victima.get("diagnostico_relacionado_2", "") or "")
-            self.txt_diag_relac3.setText(victima.get("diagnostico_relacionado_3", "") or "")
-            
-            self.chk_uci.setChecked(victima.get("ingreso_uci", False))
-            if victima.get("fecha_ingreso_uci"):
-                self.date_ingreso_uci.setDate(QDate(victima["fecha_ingreso_uci"]))
-            if victima.get("fecha_egreso_uci"):
-                self.date_egreso_uci.setDate(QDate(victima["fecha_egreso_uci"]))
             
             nombre_completo = f"{persona.get('primer_nombre', '')} {persona.get('primer_apellido', '')}"
             self.lbl_estado.setText(f"📝 Víctima actual: {nombre_completo}")
@@ -538,6 +529,10 @@ class VictimaForm(QWidget):
             """)
             self.lbl_estado.setVisible(True)
             
-            # Mostrar botón Actualizar, ocultar Guardar
+            # SEGURIDAD: Bloquear búsqueda cuando ya existe víctima guardada
+            self._bloquear_busqueda_victima()
+            
+            # Mostrar botón Actualizar y Anular, ocultar Guardar
             self.btn_guardar.setVisible(False)
             self.btn_actualizar.setVisible(True)
+            self.btn_anular.setVisible(True)

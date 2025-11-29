@@ -29,6 +29,7 @@ class ConductorPresenter:
         self.view.buscar_persona_signal.connect(self.buscar_persona)
         self.view.guardar_conductor_signal.connect(self.guardar_conductor)
         self.view.actualizar_conductor_signal.connect(self.actualizar_conductor)
+        self.view.anular_conductor_signal.connect(self.anular_conductor)
     
     def _cargar_catalogos(self):
         """Carga los catálogos necesarios."""
@@ -46,6 +47,12 @@ class ConductorPresenter:
                 sexos = catalogo_repo.get_sexos()
                 self.view.cargar_sexos(
                     [{"id": s.id, "descripcion": s.descripcion} for s in sexos]
+                )
+                
+                # Municipios
+                municipios = catalogo_repo.get_todos_municipios()
+                self.view.cargar_municipios(
+                    [{"id": m.id, "nombre": m.nombre} for m in municipios]
                 )
         except Exception as e:
             print(f"Error cargando catálogos: {e}")
@@ -74,6 +81,9 @@ class ConductorPresenter:
                         "segundo_apellido": persona.segundo_apellido,
                         "fecha_nacimiento": persona.fecha_nacimiento,
                         "sexo_id": persona.sexo_id,
+                        "direccion": persona.direccion,
+                        "telefono": persona.telefono,
+                        "municipio_residencia_id": persona.municipio_residencia_id,
                     })
                 else:
                     self.view.lbl_persona_encontrada.setText("⚠️ Persona no encontrada. Se creará nueva.")
@@ -118,9 +128,9 @@ class ConductorPresenter:
                     "segundo_apellido": datos["segundo_apellido"],
                     "fecha_nacimiento": datos["fecha_nacimiento"],
                     "sexo_id": datos["sexo_id"],
-                    "direccion": "N/A",  # Campo obligatorio en BD
-                    "telefono": "N/A",  # Campo obligatorio en BD
-                    "municipio_residencia_id": None,
+                    "direccion": datos.get("direccion") or "N/A",
+                    "telefono": datos.get("telefono") or "N/A",
+                    "municipio_residencia_id": datos.get("municipio_residencia_id") or 1,
                 }
                 
                 persona = persona_repo.obtener_o_crear(
@@ -192,9 +202,9 @@ class ConductorPresenter:
                     "segundo_apellido": datos["segundo_apellido"],
                     "fecha_nacimiento": datos["fecha_nacimiento"],
                     "sexo_id": datos["sexo_id"],
-                    "direccion": "N/A",  # Campo obligatorio en BD
-                    "telefono": "N/A",  # Campo obligatorio en BD
-                    "municipio_residencia_id": None,
+                    "direccion": datos.get("direccion") or "N/A",
+                    "telefono": datos.get("telefono") or "N/A",
+                    "municipio_residencia_id": datos.get("municipio_residencia_id") or 1,
                 }
                 
                 persona = persona_repo.obtener_o_crear(
@@ -224,6 +234,40 @@ class ConductorPresenter:
             import traceback
             traceback.print_exc()
     
+    def anular_conductor(self, conductor_id: int):
+        """Anula un conductor (soft delete - cambia estado a 0)."""
+        try:
+            with get_db_session() as session:
+                conductor_repo = ConductorRepository(session)
+                
+                if conductor_repo.anular(conductor_id):
+                    session.commit()
+                    print(f"✓ Conductor {conductor_id} anulado correctamente")
+                    
+                    from PySide6.QtWidgets import QMessageBox
+                    QMessageBox.information(
+                        self.view,
+                        "Anulación Exitosa",
+                        "El conductor ha sido anulado correctamente.\n"
+                        "Puede registrar un nuevo conductor para este accidente."
+                    )
+                    
+                    # Limpiar formulario para permitir nuevo registro
+                    self.view.limpiar_formulario()
+                else:
+                    print(f"❌ No se pudo anular el conductor ID {conductor_id}")
+        
+        except Exception as e:
+            print(f"❌ Error anulando conductor: {e}")
+            import traceback
+            traceback.print_exc()
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.critical(
+                self.view,
+                "Error",
+                f"Error al anular conductor: {str(e)}"
+            )
+    
     def cargar_conductor_existente(self):
         """Carga el conductor existente si hay uno."""
         if not self.accidente_id:
@@ -250,6 +294,9 @@ class ConductorPresenter:
                             "segundo_apellido": persona.segundo_apellido,
                             "fecha_nacimiento": persona.fecha_nacimiento,
                             "sexo_id": persona.sexo_id,
+                            "direccion": persona.direccion,
+                            "telefono": persona.telefono,
+                            "municipio_residencia_id": persona.municipio_residencia_id,
                         }
                     })
                     
