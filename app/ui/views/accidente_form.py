@@ -361,13 +361,49 @@ class AccidenteForm(QWidget):
         """Crea la pestaña de totales."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        
-        label = QLabel("Totales y declaración - A implementar por presenter")
-        layout.addWidget(label)
-        
-        # TODO: Agregar formulario de totales
-        
+
+        # Encabezado
+        header = QLabel("Totales y declaración (informativo)")
+        header.setStyleSheet("font-weight: bold;")
+        layout.addWidget(header)
+
+        # Campos informativos: Gastos Movilización y Gastos Quirúrgicos
+        row = QHBoxLayout()
+        lbl_mov = QLabel("Gastos Movilización:")
+        self.lbl_gastos_movilizacion = QLabel("0")
+        row.addWidget(lbl_mov)
+        row.addWidget(self.lbl_gastos_movilizacion)
+
+        row.addSpacing(30)
+
+        lbl_qx = QLabel("Gastos Médico Quirúrgicos:")
+        self.lbl_gastos_qx = QLabel("0")
+        row.addWidget(lbl_qx)
+        row.addWidget(self.lbl_gastos_qx)
+
+        layout.addLayout(row)
+
+        # Nota explicativa
+        note = QLabel("Los valores mostrados son sumas informativas de los procedimientos asociados al accidente.")
+        layout.addWidget(note)
+
+        layout.addStretch()
+
         return widget
+
+    def set_totales(self, totales: dict):
+        """Actualiza la vista de totales con los valores calculados.
+
+        Espera dict con claves: 'gastosMovilizacion', 'gastosQx'.
+        """
+        try:
+            gm = totales.get("gastosMovilizacion", 0)
+            gq = totales.get("gastosQx", 0)
+            # Formato con separador de miles
+            self.lbl_gastos_movilizacion.setText(f"{int(gm):,}")
+            self.lbl_gastos_qx.setText(f"{int(gq):,}")
+        except Exception:
+            pass
     
     def _on_nuevo(self):
         """Limpia el formulario para un nuevo accidente."""

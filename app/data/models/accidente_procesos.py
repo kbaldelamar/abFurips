@@ -44,30 +44,28 @@ class AccidenteMedicoTratante(Base):
 
 class AccidenteRemision(Base):
     __tablename__ = "accidente_remision"
-    
+
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     accidente_id = Column(BigInteger, ForeignKey("accidente.id"), nullable=False, comment="FK accidente (padre)")
     tipo_referencia = Column(Integer, nullable=False, comment="1 = Remite paciente, 2 = Orden de servicio, 3 = Recibe paciente")
     fecha_remision = Column(Date, nullable=True)
     hora_salida = Column(Time, nullable=True)
-    codigo_hab_remitente = Column(String(12), nullable=True)
-    profesional_remite = Column(String(60), nullable=True)
-    cargo_remite = Column(String(30), nullable=True)
     fecha_aceptacion = Column(Date, nullable=True)
     hora_aceptacion = Column(Time, nullable=True)
+    ipsRecibe = Column(String(100), nullable=True)
     codigo_hab_recibe = Column(String(12), nullable=True)
     profesional_recibe = Column(String(60), nullable=True)
+    cargo_Recibe = Column(String(30), nullable=True)
     placa_ambulancia = Column(String(12), nullable=True)
     estado = Column(Enum("activo", "inactivo", name="estado_remision"), nullable=False, default="activo")
     persona_remite_id = Column(BigInteger, ForeignKey("persona.id"), nullable=True)
-    persona_recibe_id = Column(BigInteger, ForeignKey("persona.id"), nullable=True)
     creado_en = Column(TIMESTAMP, server_default=func.current_timestamp())
     actualizado_en = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
-    
+    prestadorId = Column(BigInteger, nullable=True)
+
     # Relaciones
     accidente = relationship("Accidente", back_populates="remisiones")
     persona_remite = relationship("Persona", foreign_keys=[persona_remite_id])
-    persona_recibe = relationship("Persona", foreign_keys=[persona_recibe_id])
-    
+
     def __repr__(self) -> str:
         return f"<AccidenteRemision(id={self.id}, accidente_id={self.accidente_id}, tipo={self.tipo_referencia})>"

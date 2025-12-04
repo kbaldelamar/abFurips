@@ -4,7 +4,10 @@ Presenter principal de la aplicación (patrón MVP).
 from PySide6.QtCore import QObject
 
 from app.ui.views import MainWindow, AccidenteForm
+from app.ui.views.buscar_imprimir_dialog import BuscarImprimirDialog
+from PySide6.QtWidgets import QMessageBox
 from app.ui.presenters.accidente_presenter import AccidentePresenter
+from app.domain.services.print_service import PrintService
 
 
 class MainPresenter(QObject):
@@ -49,12 +52,22 @@ class MainPresenter(QObject):
     
     def mostrar_imprimir_pdf(self):
         """Muestra el diálogo para imprimir PDFs."""
-        # TODO: Implementar
-        self.view.mostrar_mensaje(
-            "Imprimir PDF",
-            "Funcionalidad en desarrollo",
-            "info"
-        )
+        # Mostrar el panel de búsqueda/imprimir embebido en la ventana principal
+        self.imprimir_panel = BuscarImprimirDialog(self.view)
+        self.imprimir_panel.imprimir_accidente.connect(self._on_imprimir_accidente)
+        self.view.set_content(self.imprimir_panel)
+
+    def _on_imprimir_accidente(self, accidente_id: int):
+        # Invocar el servicio de generación de PDF (sin bloquear UI por mucho tiempo)
+        try:
+            self.view.mostrar_estado(f"Generando PDF para accidente {accidente_id}...")
+            svc = PrintService()
+            # Generar PDF usando la consulta CTE (rellena DTO desde una sola consulta)
+            output = svc.generar_pdf_accidente(accidente_id, tipo="furips_cte")
+            self.view.mostrar_estado(f"PDF generado: {output}")
+            QMessageBox.information(self.view, "Imprimir", f"PDF generado: {output}")
+        except Exception as e:
+            QMessageBox.critical(self.view, "Error impresión", f"No se pudo generar el PDF: {e}")
     
     def mostrar_configuracion(self):
         """Muestra el diálogo de configuración."""

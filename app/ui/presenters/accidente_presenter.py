@@ -158,6 +158,30 @@ class AccidentePresenter(QObject):
                     self.vehiculo_presenter.set_accidente_id(accidente.id)
                     self.remision_presenter.set_accidente_id(accidente.id)
                     self.detalle_presenter.set_accidente_id(accidente.id)
+                    # Cargar totales informativos desde repo y actualizar vista
+                    try:
+                        with get_db_session() as session:
+                            from app.data.repositories.accidente_repo import AccidenteRepository
+                            repo = AccidenteRepository(session)
+                            totales = repo.get_totales_by_accidente(accidente.id)
+                            print(f"[AccidentePresenter] Totales calculados para accidente {accidente.id}: {totales}")
+                            try:
+                                # Intentar actualizar la vista principal
+                                if hasattr(self.view, 'set_totales'):
+                                    self.view.set_totales(totales)
+                                    print("[AccidentePresenter] set_totales invoked on view")
+                                else:
+                                    # intentar acceder a la ventana principal
+                                    win = self.view.window()
+                                    if hasattr(win, 'set_totales'):
+                                        win.set_totales(totales)
+                                        print("[AccidentePresenter] set_totales invoked on window")
+                                    else:
+                                        print("⚠️ set_totales not found on view or window")
+                            except Exception as e:
+                                print(f"⚠️ No se pudo actualizar la vista de totales: {e}")
+                    except Exception as e:
+                        print(f"❌ Error cargando totales: {e}")
                     
                     # Mostrar mensaje de éxito
                     self._mostrar_exito(
@@ -332,7 +356,29 @@ class AccidentePresenter(QObject):
                 self.vehiculo_presenter.set_accidente_id(accidente.id)
                 self.remision_presenter.set_accidente_id(accidente.id)
                 self.detalle_presenter.set_accidente_id(accidente.id)
-                
+                # Calcular y mostrar totales en la pestaña correspondiente
+                try:
+                    with get_db_session() as session_tot:
+                        from app.data.repositories.accidente_repo import AccidenteRepository
+                        repo_acc = AccidenteRepository(session_tot)
+                        totales = repo_acc.get_totales_by_accidente(accidente.id)
+                        print(f"[AccidentePresenter] Totales calculados para accidente {accidente.id}: {totales}")
+                        try:
+                            if hasattr(self.view, 'set_totales'):
+                                self.view.set_totales(totales)
+                                print("[AccidentePresenter] set_totales invoked on view")
+                            else:
+                                win = self.view.window()
+                                if hasattr(win, 'set_totales'):
+                                    win.set_totales(totales)
+                                    print("[AccidentePresenter] set_totales invoked on window")
+                                else:
+                                    print("⚠️ set_totales not found on view or window")
+                        except Exception as e:
+                            print(f"⚠️ No se pudo actualizar la vista de totales: {e}")
+                except Exception as e:
+                    print(f"❌ Error calculando totales: {e}")
+
                 print(f"✓ Accidente {accidente.id} cargado exitosamente")
         
         except Exception as e:

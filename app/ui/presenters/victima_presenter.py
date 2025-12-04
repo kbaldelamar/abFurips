@@ -392,6 +392,22 @@ class VictimaPresenter:
                             "municipio_residencia_id": persona.municipio_residencia_id,
                         }
                     }
+                    # Asegurar que el combo de tipos tenga el valor disponible.
+                    try:
+                        idx = self.view.combo_tipo_id.findData(persona.tipo_identificacion_id)
+                        if idx < 0:
+                            # El combo no contiene ese tipo => recargar catálogos de tipos
+                            from app.data.repositories.catalogo_repo import CatalogoRepository
+                            tipos = CatalogoRepository(session).get_tipos_identificacion()
+                            tipos_data = [{"id": t.id, "descripcion": t.descripcion} for t in tipos]
+                            try:
+                                self.view.cargar_tipos_identificacion(tipos_data)
+                            except Exception:
+                                pass
+                    except Exception:
+                        # Si algo falla al acceder al combo, seguimos y dejamos que la vista intente cargar
+                        pass
+
                     self.view.cargar_victima_existente(datos_victima)
                     
                     # Emitir señal para otros presenters (médico tratante)

@@ -203,6 +203,37 @@ class DetallePresenter(QObject):
                 # Recargar detalles
                 self._cargar_detalles()
                 
+                # Actualizar totales en la vista principal (si existe)
+                try:
+                    from app.data.repositories.accidente_repo import AccidenteRepository
+                    with get_db_session() as session_tot:
+                        repo_acc = AccidenteRepository(session_tot)
+                        totales = repo_acc.get_totales_by_accidente(self.accidente_id)
+                        # Buscar un ancestro que implemente set_totales
+                        parent = self.view
+                        found = False
+                        while parent is not None:
+                            if hasattr(parent, 'set_totales'):
+                                try:
+                                    parent.set_totales(totales)
+                                    found = True
+                                    break
+                                except Exception:
+                                    break
+                            parent = parent.parent()
+                        if not found:
+                            # Intentar usar la ventana principal
+                            try:
+                                win = self.view.window()
+                                if hasattr(win, 'set_totales'):
+                                    win.set_totales(totales)
+                            except Exception:
+                                pass
+                except Exception as e:
+                    print(f"⚠️ No se pudieron actualizar los totales tras guardar detalles: {e}")
+                    import traceback
+                    traceback.print_exc()
+
                 # Mostrar mensaje de éxito
                 self.view.mostrar_detalles_guardados()
         

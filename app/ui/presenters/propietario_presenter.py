@@ -144,49 +144,48 @@ class PropietarioPresenter:
         if not self.accidente_id:
             print("Error: No hay accidente seleccionado")
             return
-        
         # Validaciones
         if not datos.get("numero_identificacion"):
             print("Error: Debe ingresar número de identificación")
             return
-        
+
         if not datos.get("primer_nombre") or not datos.get("primer_apellido"):
             print("Error: Debe ingresar nombre y apellido")
             return
-        
+
         try:
             with get_db_session() as session:
                 persona_repo = PersonaRepository(session)
                 propietario_repo = PropietarioRepository(session)
-                
+
                 # Verificar si ya existe un propietario para este accidente
                 propietarios_existentes = propietario_repo.get_by_accidente(self.accidente_id)
                 if propietarios_existentes and not datos.get("propietario_id"):
                     print("❌ Ya existe un propietario registrado para este accidente")
                     return
-                
+
                 # 1. Crear/actualizar persona
                 datos_persona = {
-                    "tipo_identificacion_id": datos["tipo_identificacion_id"],
+                    "tipo_identificacion_id": datos.get("tipo_identificacion_id"),
                     "numero_identificacion": datos["numero_identificacion"],
                     "primer_nombre": datos["primer_nombre"],
-                    "segundo_nombre": datos["segundo_nombre"],
+                    "segundo_nombre": datos.get("segundo_nombre"),
                     "primer_apellido": datos["primer_apellido"],
-                    "segundo_apellido": datos["segundo_apellido"],
-                    "fecha_nacimiento": datos["fecha_nacimiento"],
-                    "sexo_id": datos["sexo_id"],
+                    "segundo_apellido": datos.get("segundo_apellido"),
+                    "fecha_nacimiento": datos.get("fecha_nacimiento"),
+                    "sexo_id": datos.get("sexo_id"),
                     "direccion": datos.get("direccion") or "N/A",
                     "telefono": datos.get("telefono") or "N/A",
                     "municipio_residencia_id": datos.get("municipio_residencia_id") or 1,
                 }
-                
+
                 persona = persona_repo.obtener_o_crear(
-                    datos["tipo_identificacion_id"],
-                    datos["numero_identificacion"],
+                    datos_persona.get("tipo_identificacion_id"),
+                    datos_persona.get("numero_identificacion"),
                     datos_persona
                 )
                 session.flush()
-                
+
                 # 2. Crear/actualizar propietario
                 if datos.get("propietario_id"):
                     # Actualizar existente
@@ -202,23 +201,22 @@ class PropietarioPresenter:
                     )
                     propietario = propietario_repo.create(propietario)
                     session.flush()
-                
+
                 session.commit()
-                
+
                 nombre_completo = f"{persona.primer_nombre} {persona.primer_apellido}"
                 print(f"✓ Propietario guardado: {nombre_completo}")
-                
+
                 self.view.mostrar_propietario_guardado(propietario.id, nombre_completo)
-                
+
                 # Notificar al vehículo que el propietario fue guardado
                 if self.propietario_guardado_callback:
                     self.propietario_guardado_callback()
-                
+
         except Exception as e:
             print(f"❌ Error guardando propietario: {e}")
             import traceback
             traceback.print_exc()
-    
     def actualizar_propietario(self, datos: Dict[str, Any]):
         """Actualiza un propietario existente."""
         if not self.accidente_id:
@@ -332,11 +330,11 @@ class PropietarioPresenter:
             with get_db_session() as session:
                 propietario_repo = PropietarioRepository(session)
                 propietarios = propietario_repo.get_by_accidente(self.accidente_id)
-                
+
                 if propietarios:
                     propietario = propietarios[0]  # Solo debe haber uno
                     persona = propietario.persona
-                    
+
                     self.view.cargar_propietario_existente({
                         "id": propietario.id,
                         "persona": {
@@ -354,6 +352,7 @@ class PropietarioPresenter:
                             "municipio_residencia_id": persona.municipio_residencia_id,
                         }
                     })
+                # Si no hay propietarios activos, no cargar ninguno (no mostrar anulados)
                     
         except Exception as e:
             print(f"❌ Error cargando propietario: {e}")
