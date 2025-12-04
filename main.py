@@ -16,7 +16,7 @@ from app.ui.presenters import MainPresenter
 
 
 def main():
-    """Función principal de la aplicación."""
+    """Función principal de la aplicación.   """
     # Configurar logging
     setup_logging()
     logger = get_logger(__name__)
