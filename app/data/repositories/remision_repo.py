@@ -17,7 +17,6 @@ class RemisionRepository:
             self.session.query(AccidenteRemision)
             .options(
                 joinedload(AccidenteRemision.persona_remite),
-                joinedload(AccidenteRemision.persona_recibe)
             )
             .filter(AccidenteRemision.id == remision_id)
             .first()
@@ -29,11 +28,9 @@ class RemisionRepository:
             self.session.query(AccidenteRemision)
             .options(
                 joinedload(AccidenteRemision.persona_remite),
-                joinedload(AccidenteRemision.persona_recibe)
             )
             .filter(
-                AccidenteRemision.accidente_id == accidente_id,
-                AccidenteRemision.estado == "activo"
+                AccidenteRemision.accidente_id == accidente_id
             )
             .all()
         )

@@ -177,6 +177,47 @@ class AccidenteRepository:
             return str(resultado).zfill(12)
         
         return None
+
+    def get_totales_by_accidente(self, accidente_id: int) -> dict:
+        """Calcula totales informativos a partir de accidente_detalle.
+
+        Devuelve un dict con claves: 'gastosMovilizacion' y 'gastosQx'.
+        """
+        # Importar dentro del método para evitar dependencias circulares en tiempo de import
+        from sqlalchemy import func, case
+        from app.data.models import AccidenteDetalle
+
+        # SUM CASE: tipo_servicio_id == 4 => movilizacion, else => quirurgicos
+        # Aplicar filtro adicional: considerar sólo detalles activos (estado == 1)
+        movilizacion_sum = self.session.query(
+            func.coalesce(func.sum(
+                case(
+                    (AccidenteDetalle.tipo_servicio_id == 4, AccidenteDetalle.valor_unitario),
+                    else_=0
+                )
+            ), 0)
+        ).filter(
+            AccidenteDetalle.accidente_id == accidente_id,
+            AccidenteDetalle.estado == 1,
+        ).scalar() or 0
+
+        qx_sum = self.session.query(
+            func.coalesce(func.sum(
+                case(
+                    (AccidenteDetalle.tipo_servicio_id != 4, AccidenteDetalle.valor_unitario),
+                    else_=0
+                )
+            ), 0)
+        ).filter(
+            AccidenteDetalle.accidente_id == accidente_id,
+            AccidenteDetalle.estado == 1,
+        ).scalar() or 0
+
+        return {
+            "accidente_id": accidente_id,
+            "gastosMovilizacion": float(movilizacion_sum),
+            "gastosQx": float(qx_sum),
+        }
     
     def generar_siguiente_consecutivo(self, prestador_id: int) -> str:
         """
@@ -243,11 +284,106 @@ class AccidenteRepository:
         
         if filtros.get("documento"):
             query = query.filter(Persona.numero_identificacion.like(f"%{filtros['documento']}%"))
+
+        # Mostrar solo accidentes activos (estado = 1)
+        query = query.filter(Accidente.estado == 1)
         
         # Ordenar por fecha descendente
         query = query.order_by(Accidente.fecha_evento.desc())
         
         # Limitar resultados
         query = query.limit(100)
-        
-        return query.all()
+        # Intentar mostrar la consulta SQL que se ejecutará (con valores cuando sea posible)
+        try:
+            # Obtener dialecto del engine ligado a la sesión
+            dialect = self.session.get_bind().dialect
+            compiled = query.statement.compile(dialect=dialect, compile_kwargs={"literal_binds": True})
+            print("[AccidenteRepository] SQL ejecutada:", compiled)
+        except Exception as e:
+            # Fallback: mostrar representación del query
+            try:
+                print("[AccidenteRepository] SQL (fallback):", str(query))
+            except Exception:
+                print("[AccidenteRepository] No se pudo compilar la consulta para mostrarla")
+
+        results = query.all()
+        # Imprimir registros devueltos (para depuración)
+        try:
+            print(f"[AccidenteRepository] Registros devueltos: {len(results)}")
+            for r in results:
+                print(repr(r))
+        except Exception:
+            pass
+
+        return results
+
+    def resumen_relaciones(self, accidente_id: int) -> dict:
+        """
+        Devuelve un resumen con conteos de las tablas relacionadas a un `accidente`.
+
+        Resultado ejemplo:
+        {
+            'victimas': 2,
+            'conductores': 1,
+            'propietarios': 1,
+            'detalles': 5,
+            'totales': 1,
+            'medicos_tratantes': 1,
+            'remisiones': 0,
+        }
+        """
+        from app.data.models import (
+            AccidenteVictima,
+            AccidenteConductor,
+            AccidentePropietario,
+            AccidenteDetalle,
+            AccidenteTotales,
+            AccidenteMedicoTratante,
+            AccidenteRemision,
+        )
+
+        resumen = {}
+
+        resumen['victimas'] = (
+            self.session.query(AccidenteVictima)
+            .filter(AccidenteVictima.accidente_id == accidente_id)
+            .count()
+        )
+
+        resumen['conductores'] = (
+            self.session.query(AccidenteConductor)
+            .filter(AccidenteConductor.accidente_id == accidente_id)
+            .count()
+        )
+
+        resumen['propietarios'] = (
+            self.session.query(AccidentePropietario)
+            .filter(AccidentePropietario.accidente_id == accidente_id)
+            .count()
+        )
+
+        resumen['detalles'] = (
+            self.session.query(AccidenteDetalle)
+            .filter(AccidenteDetalle.accidente_id == accidente_id)
+            .count()
+        )
+
+        resumen['totales'] = (
+            self.session.query(AccidenteTotales)
+            .filter(AccidenteTotales.accidente_id == accidente_id)
+            .count()
+        )
+
+        resumen['medicos_tratantes'] = (
+            self.session.query(AccidenteMedicoTratante)
+            .filter(AccidenteMedicoTratante.accidente_id == accidente_id)
+            .count()
+        )
+
+        resumen['remisiones'] = (
+            self.session.query(AccidenteRemision)
+            .filter(AccidenteRemision.accidente_id == accidente_id)
+            .count()
+        )
+
+        return resumen
